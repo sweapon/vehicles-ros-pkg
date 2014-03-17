@@ -232,7 +232,7 @@ void PlaDyPosNode::driverMsg(const int n[4])
 	for (int i=0; i<4;++i)
 	{
 		lastRevs[i]=n[i];
-		out<<"(P"<<i<<","<<abs(n[i])<<","<<((n[i]>0)?1:0)<<")";
+		out<<"(P"<<i<<","<<abs(n[i])<<","<<((n[i]>0)?0:1)<<")";
 	}
 	//Here we request the currents and voltages.
 	for (int i=0; i<6;++i)	out<<"(C"<<i<<")";
