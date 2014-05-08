@@ -83,9 +83,9 @@ void PlaDyPosNode::configure(ros::NodeHandle& nh, ros::NodeHandle& ph)
 	//Initialize the allocation matrix
 	Eigen::Matrix<float, 3,4> B;
 	float cp(cos(M_PI/4)),sp(sin(M_PI/4));
-	B<<-cp,cp,cp,-cp,
-	   -sp,-sp,sp,sp,
-	    1,-1,1,-1;
+	B<<-cp,-cp,cp,cp,
+	    sp,-sp,-sp,sp,
+	    -1,1,-1,1;
 
 	//Scaling allocation only for XYN
 	allocator.configure(B,maxThrust,minThrust);
@@ -264,8 +264,11 @@ void PlaDyPosNode::onTau(const auv_msgs::BodyForceReq::ConstPtr tau)
 	if (scale>1)
 	{
 	  t.disable_axis.x = 1;
+	  if (tauXYN(0) > 0 ) t.windup.x = 1; else t.windup.x = -1;
 	  t.disable_axis.y = 1;
+	  if (tauXYN(1) > 0 ) t.windup.y = 1; else t.windup.y = -1;
 	  t.disable_axis.yaw = 1;
+	  if (tauXYN(2) > 0 ) t.windup.yaw = 1; else t.windup.yaw = -1;
 	}
 
 	tauAch.publish(t);
