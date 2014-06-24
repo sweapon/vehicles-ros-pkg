@@ -10,7 +10,7 @@ namespace labust {
       ~BatteryAlarmNode();
 
     private:
-      void checkVoltage(const std_msgs::Float32Ptr battery_voltage);
+      void checkVoltage(const std_msgs::Float32::ConstPtr& battery_voltage);
       ros::Subscriber battery_voltage_subscriber;
       ros::Publisher alarm_publisher;
       int threshold_;
