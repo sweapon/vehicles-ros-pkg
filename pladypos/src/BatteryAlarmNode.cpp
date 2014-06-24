@@ -8,6 +8,7 @@ using namespace labust::vehicles;
 BatteryAlarmNode::BatteryAlarmNode() :
     threshold_(18) {
   ros::NodeHandle nh;
+  nh.getParam("threshold", threshold_);
   battery_voltage_subscriber = nh.subscribe("battery_voltage", 1, &BatteryAlarmNode::checkVoltage, this);
   alarm_publisher = nh.advertise<std_msgs::Bool>("battery_alarm", 1);
 }
@@ -19,6 +20,7 @@ void BatteryAlarmNode::checkVoltage(const std_msgs::Float32Ptr battery_voltage) 
     std_msgs::Bool alarm;
     alarm.data = true;
     alarm_publisher.publish(alarm);
+    ROS_ERROR("Battery voltage below threshold!");
   }
 }
 
