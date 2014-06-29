@@ -47,8 +47,10 @@ using namespace labust::vehicles;
 
 PlaDyPosNode_v2::PlaDyPosNode_v2():
 	Un(25.9),
+	Ub(25.9),
 	lastTau(ros::Time::now()),
-	timeout(0.5)
+	timeout(0.5),
+	useWeighted(false)
 {
 	posDir[P0] = 1.376872219;
 	negDir[P0] = 1.097241348;
@@ -61,6 +63,18 @@ PlaDyPosNode_v2::PlaDyPosNode_v2():
 
 	posDir[P3] = 1.922883428;
 	negDir[P3] = 0.82880469;
+
+	for (int i=0; i<4; ++i)
+	{
+		posDir[i] /=2*sqrt(2);
+		negDir[i] /=2*sqrt(2);
+	}
+	float divisor = negDir[P2];
+	for (int i=0; i<4; ++i)
+	{
+		posDir[i] /= divisor;
+		negDir[i] /= divisor;
+	}
 }
 
 PlaDyPosNode_v2::~PlaDyPosNode_v2()
@@ -78,13 +92,15 @@ void PlaDyPosNode_v2::configure(ros::NodeHandle& nh, ros::NodeHandle& ph)
 	double maxThrust(1),minThrust(-1);
 	//ph.param("maxThrust",maxThrust,maxThrust);
 	//ph.param("minThrust",minThrust,minThrust);
+	ph.param("useWeighted",useWeighted, useWeighted);
 
 	//Initialize the allocation matrix
-	Eigen::Matrix<float, 3,4> B;
 	float cp(cos(M_PI/4)),sp(sin(M_PI/4));
-	B<<cp,cp,cp,cp,
-	   -sp,sp,sp,-sp,
-	    -1,1,-1,1;
+	B<<-cp,-cp,cp,cp,
+	   sp,-sp,sp,-sp,
+	    1,-1,-1,1;
+
+	BinvIdeal = B.transpose()*(B*B.transpose()).inverse();
 
 	//Scaling allocation only for XYN
 	allocator.configure(B,maxThrust,minThrust);
@@ -102,11 +118,24 @@ void PlaDyPosNode_v2::onTau(const auv_msgs::BodyForceReq::ConstPtr tau)
 	Eigen::Vector3f tauXYN,tauXYNsc;
 	Eigen::Vector4f tauI;
 	tauXYN<<tau->wrench.force.x,tau->wrench.force.y,tau->wrench.torque.z;
-	double scale = allocator.scaleII(tauXYN,&tauXYNsc,&tauI);
 
 	//Adapt maximum thrust to available battery voltage
 	double maxThrust((Ub*Ub)/(Un*Un)),minThrust(-(Ub*Ub)/(Un*Un));
-	allocator.configure(B,maxThrust,minThrust);
+	double scale = 1;
+	if (!useWeighted)
+	{
+		allocator.configure(B,maxThrust,minThrust);
+		scale = allocator.scaleII(tauXYN,&tauXYNsc,&tauI);
+	}
+	else
+	{
+		for (int i=0; i<4; ++i)
+		{
+			posDirC[i] = (Ub*Ub)/(Un*Un) * posDir[i];
+			negDirC[i] = (Ub*Ub)/(Un*Un) * negDir[i];
+		}
+		scale = weightedScaling(tauXYN,&tauXYNsc,&tauI);
+	}
 
 	ROS_INFO("Available thrust: (%f, %f) - voltage = %f",minThrust, maxThrust, Ub);
 
@@ -138,7 +167,7 @@ void PlaDyPosNode_v2::onTau(const auv_msgs::BodyForceReq::ConstPtr tau)
 	//Here we map the thrusts
 	for (int i=0; i<pwm->data.size();++i)
 	{
-		pwm->data[i] = labust::vehicles::AffineThruster::getRevs(tauI(i)/((Ub*Ub)/(Un*Un)),1.0,1.0);
+		pwm->data[i] = 255*labust::vehicles::AffineThruster::getRevsD(tauI(i)/((Ub*Ub)/(Un*Un)),posDir[i],negDir[i]);
 	}
 	
 	revs.publish(pwm);
