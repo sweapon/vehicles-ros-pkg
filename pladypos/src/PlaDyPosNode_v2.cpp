@@ -36,7 +36,7 @@
 #include <labust/math/NumberManipulation.hpp>
 
 #include <std_msgs/Float32MultiArray.h>
-#include <std_msgs/Int32MultiArray.h>
+#include <std_msgs/Int16MultiArray.h>
 
 #include <string>
 #include <sstream>
@@ -46,35 +46,52 @@ using namespace labust::vehicles;
 
 
 PlaDyPosNode_v2::PlaDyPosNode_v2():
-	Un(25.9),
-	Ub(25.9),
+	Ub(18.5),
+	Un(18.5),
 	lastTau(ros::Time::now()),
 	timeout(0.5),
-	useWeighted(false)
+	useWeighted(false),
+	maxCap(0.7)
 {
-	posDir[P0] = 1.376872219;
-	negDir[P0] = 1.097241348;
+	/*
+	//Seamor thruster
+	posDir[0] = 1.376872219;
+	negDir[0] = 1.097241348;
 
-	posDir[P1] = 1.908577382;
-	negDir[P1] = 0.740035409;
+	posDir[1] = 1.908577382;
+	negDir[1] = 0.740035409;
 
-	posDir[P2] = 2.088491416;
-	negDir[P2] = 0.718808411;
+	posDir[2] = 2.088491416;
+	negDir[2] = 0.718808411;
 
-	posDir[P3] = 1.922883428;
-	negDir[P3] = 0.82880469;
+	posDir[3] = 1.922883428;
+	negDir[3] = 0.82880469;
+	*/
 
-	for (int i=0; i<4; ++i)
+	posDir[0] = 1.0;
+        negDir[0] = 1.0;
+
+        posDir[1] = 1.0;
+        negDir[1] = 1.0;
+
+        posDir[2] = 1.0;
+        negDir[2] = 1.0;
+
+        posDir[3] = 1.0;
+        negDir[3] = 1.0;
+
+	/*for (int i=0; i<4; ++i)
 	{
 		posDir[i] /=2*sqrt(2);
 		negDir[i] /=2*sqrt(2);
 	}
-	float divisor = negDir[P2];
+	
+	float divisor = negDir[2];
 	for (int i=0; i<4; ++i)
 	{
 		posDir[i] /= divisor;
 		negDir[i] /= divisor;
-	}
+	}*/
 }
 
 PlaDyPosNode_v2::~PlaDyPosNode_v2()
@@ -86,19 +103,20 @@ void PlaDyPosNode_v2::configure(ros::NodeHandle& nh, ros::NodeHandle& ph)
 	tau = nh.subscribe("tauIn", 1, &PlaDyPosNode_v2::onTau,this);
 	batteryVoltage = nh.subscribe("battery_voltage", 1, &PlaDyPosNode_v2::onBatteryVoltage,this);
 	tauAch = nh.advertise<auv_msgs::BodyForceReq>("tauAch",1);
-	revs = nh.advertise<std_msgs::Int32MultiArray>("pwm_out",1);
+	revs = nh.advertise<std_msgs::Int16MultiArray>("pwm_out",1);
 	
 	//Initialize max/min tau
 	double maxThrust(1),minThrust(-1);
 	//ph.param("maxThrust",maxThrust,maxThrust);
 	//ph.param("minThrust",minThrust,minThrust);
+	ph.param("max_cap",maxCap,maxCap);
 	ph.param("useWeighted",useWeighted, useWeighted);
 
 	//Initialize the allocation matrix
 	float cp(cos(M_PI/4)),sp(sin(M_PI/4));
-	B<<-cp,-cp,cp,cp,
-	   sp,-sp,sp,-sp,
-	    1,-1,-1,1;
+	B<<cp,cp,-cp,-cp,
+	   -sp,sp,-sp,sp,
+	    -1,1,1,-1;
 
 	BinvIdeal = B.transpose()*(B*B.transpose()).inverse();
 
@@ -108,7 +126,7 @@ void PlaDyPosNode_v2::configure(ros::NodeHandle& nh, ros::NodeHandle& ph)
 
 void PlaDyPosNode_v2::onBatteryVoltage(const std_msgs::Float32::ConstPtr voltage)
 {
-	if (this->Ub != 0) this->Ub = voltage->data;
+	if (voltage->data > 1) this->Ub = voltage->data-1;
 }
 
 void PlaDyPosNode_v2::onTau(const auv_msgs::BodyForceReq::ConstPtr tau)
@@ -120,7 +138,7 @@ void PlaDyPosNode_v2::onTau(const auv_msgs::BodyForceReq::ConstPtr tau)
 	tauXYN<<tau->wrench.force.x,tau->wrench.force.y,tau->wrench.torque.z;
 
 	//Adapt maximum thrust to available battery voltage
-	double maxThrust((Ub*Ub)/(Un*Un)),minThrust(-(Ub*Ub)/(Un*Un));
+	double maxThrust((Ub*Ub)/(Un*Un)*maxCap),minThrust(-(Ub*Ub)/(Un*Un)*maxCap);
 	double scale = 1;
 	if (!useWeighted)
 	{
@@ -162,13 +180,17 @@ void PlaDyPosNode_v2::onTau(const auv_msgs::BodyForceReq::ConstPtr tau)
 	tauAch.publish(t);
 
 	//Tau to Revs
-	std_msgs::Int32MultiArray::Ptr pwm(new std_msgs::Int32MultiArray());
+	std_msgs::Int16MultiArray::Ptr pwm(new std_msgs::Int16MultiArray());
 	pwm->data.resize(4);
 	//Here we map the thrusts
 	for (int i=0; i<pwm->data.size();++i)
 	{
 		pwm->data[i] = 255*labust::vehicles::AffineThruster::getRevsD(tauI(i)/((Ub*Ub)/(Un*Un)),posDir[i],negDir[i]);
 	}
+
+	//The driver has 6 elements
+	pwm->data.push_back(0);
+	pwm->data.push_back(0);
 	
 	revs.publish(pwm);
 }

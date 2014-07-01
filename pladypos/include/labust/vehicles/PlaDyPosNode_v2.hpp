@@ -164,6 +164,10 @@ namespace labust
 			 * Use the weighted allocation.
 			 */
 			bool useWeighted;
+			/**
+			 * The maximum thrust cap.
+ 			 */
+			double maxCap;
 		};
 	}
 }
