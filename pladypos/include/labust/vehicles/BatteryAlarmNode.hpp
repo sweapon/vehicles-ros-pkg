@@ -11,6 +11,8 @@ namespace labust {
 
     private:
       void checkVoltage(const std_msgs::Float32::ConstPtr& battery_voltage);
+      ros::NodeHandle nh;
+      ros::Rate r;
       ros::Subscriber battery_voltage_subscriber;
       ros::Publisher alarm_publisher;
       int threshold_;
