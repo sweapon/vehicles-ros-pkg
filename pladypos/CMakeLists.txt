@@ -6,8 +6,7 @@ project(pladypos)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
     auv_msgs 
-    roscpp 
-    labust_base
+    roscpp
     dynamic_reconfigure 
     snippets)
 
