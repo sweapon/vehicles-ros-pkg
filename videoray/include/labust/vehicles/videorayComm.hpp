@@ -46,7 +46,6 @@
 #include <bitset>
 
 #include <ros/ros.h>
-//#include <auv_msgs/NavSts.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/array.hpp>
@@ -180,8 +179,6 @@ namespace labust
 			 */
 			bool decode(StateVecPtr state);
 
-
-
 		private:
 			/**
 			 * The control bits set.
@@ -229,16 +226,14 @@ namespace labust
 		{
 			//using namespace labust::vehicles::state;
 			//Check if the data header is ok.
-			ROS_ERROR("DEbug3-1");
+
 			enum {yaw_byte = 3, depth_byte = 5};
 
 			//Get heading and adjust
 		  short int value = 360 - (inputBuffer[yaw_byte] + 256*inputBuffer[yaw_byte+1]);
-			ROS_ERROR("DEbug3-1-1");
 
 		//  if (value < 90) (*state)[heading]= value + 270; else (*state)[heading]= value - 90;
 			if (value < 90) heading = value + 270; else heading = value - 90;
-			ROS_ERROR("DEbug3-1-2");
 
 		  //(*state)[yaw] = labust::math::wrapRad((*state)[heading]*M_PI/180);
 //		  if (value < 90) state->orientation.yaw = value + 270; else state->orientation.yaw = value - 90;
@@ -247,7 +242,7 @@ namespace labust
 		  //Get pressure and calculate depth.
 		  //(*state)[depthPressure] = inputBuffer[depth_byte] + 256*inputBuffer[depth_byte+1];
 		  depthPressure = inputBuffer[depth_byte] + 256*inputBuffer[depth_byte+1];
-		  ROS_ERROR("DEbug3-2");
+
 		  return true;
 		}
 	}
