@@ -31,51 +31,35 @@
 *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
-#include <labust/vehicles/VRPro.hpp>
-#include <labust/xml/XMLReader.hpp>
-#include <labust/tools/TimingTools.hpp>
+#ifndef ALLOCATION_HPP_
+#define ALLOCATION_HPP_
 
-int main(int argc, char* argv[])
+#include <cmath>
+
+namespace labust
 {
-	labust::xml::ReaderPtr reader(new labust::xml::Reader(argv[1],true));
-	reader->useNode(reader->value<_xmlNode*>("//UVApp[@id='vr']"));
-	labust::vehicles::VRPro vr(reader,"");
-
-	labust::tools::wait_until_ms delay(100);
-
-	int i = 0;
-
-	while(true)
+	namespace vehicles
 	{
-		labust::vehicles::tauMap tau;
-		tau[labust::vehicles::tau::X] = 0;
-		tau[labust::vehicles::tau::Z] = 0;
-		tau[labust::vehicles::tau::N] = 0;
-		std::string temp = "0";
-		vr.setCommand(temp);
-		vr.setTAU(tau);
-		labust::vehicles::stateMap state;
-		vr.getState(state);
-
-		std::cout<<"Heading:"<<state[labust::vehicles::state::heading]<<std::endl;
-		std::cout<<"Pitch:"<<state[labust::vehicles::state::pitch]<<std::endl;
-		std::cout<<"Roll:"<<state[labust::vehicles::state::roll]<<std::endl;
-		std::cout<<"z:"<<state[labust::vehicles::state::z]<<std::endl;
-		std::cout<<"Pressure:"<<state[labust::vehicles::state::depthPressure]<<std::endl;
-
-		std::cout.precision(6);
-		std::cout<<"Time:"<<std::fixed<<labust::tools::unix_time()<<std::endl;
-
-		delay();
-		++i;
+		/**
+		 * This class helps calculate the thruster allocation.
+		 */
+		struct AffineThruster
+		{
+			/**
+			 * The method returns the number of revolutions needed to generate the requested thrust.
+			 */
+			inline static int getRevs(double thrust, double Tnn = 1, double _Tnn = 1)
+			{
+				return (thrust >= 0) ? std::ceil(std::sqrt(thrust/Tnn)) : -std::ceil(std::sqrt(-thrust/_Tnn));
+			}
+			
+			inline static double getRevsD(double thrust, double Tnn = 1, double _Tnn = 1)
+			{
+				return (thrust >= 0) ? std::sqrt(thrust/Tnn) : -std::sqrt(-thrust/_Tnn);
+			}
+		};
 	}
-
-	labust::vehicles::tauMap tau;
-	vr.setTAU(tau);
-
-	return 0;
 }
 
-
-
-
+/* ALLOCATION_HPP_ */
+#endif

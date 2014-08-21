@@ -46,7 +46,7 @@ include_directories(${Eigen_INCLUDE_DIRS})
 ###################################################
 ## Dynamic reconfigure
 ###################################################
-generate_dynamic_reconfigure_options(cfg/ThrusterMapping.cfg cfg/DPSettings.cfg)
+#generate_dynamic_reconfigure_options(cfg/ThrusterMapping.cfg cfg/DPSettings.cfg)
 
 ###################################################
 ## Declare things to be passed to other projects ##

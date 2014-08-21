@@ -1,7 +1,15 @@
+<!--/*****************************************************************
+ * test.launch
+ *
+ *  Created on: Aug 20, 2014
+ *      Author: Filip Mandic
+ *
+ ********************************************************************/
+
 /*********************************************************************
 * Software License Agreement (BSD License)
 *
-*  Copyright (c) 2010, LABUST, UNIZG-FER
+*  Copyright (c) 2014, LABUST, UNIZG-FER
 *  All rights reserved.
 *
 *  Redistribution and use in source and binary forms, with or without
@@ -30,65 +38,40 @@
 *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 *  POSSIBILITY OF SUCH DAMAGE.
-*********************************************************************/
-#ifndef VRCOMMS_HPP_
-#define VRCOMMS_HPP_
-#include <labust/vehicles/vehiclesfwd.hpp>
+******************************************************************/-->
 
-#include <boost/shared_ptr.hpp>
-#include <boost/array.hpp>
+<launch>
 
-#include <bitset>
+    <!-- ========================================================= -->
+    <!-- == Arguments ============================================ -->
+    <!-- ========================================================= -->
 
-namespace labust
-{
-	namespace vehicles
-	{
-		/**
-		 * The interface class for the VideoRay communication.
-		 */
-		class VRComms
-		{
-		public:
-			/**
-			 * The virtual destructor.
-			 */
-			virtual ~VRComms(){};
-			/**
-			 * Typedef for the thrust vector.
-			 */
-			typedef boost::array<int, 4> ThrustVec;
-			/**
-			 * Thruster enumerations.
-			 */
-			enum {port = 0, stbd, vert, light};
-			/**
-			 * The method encodes the given into the output buffer.
-			 *
-			 * \param thrust The given thrust values
-			 * \param set The control bits.
-			 */
-			virtual bool encode(const ThrustVec& thrust) = 0;
-			/**
-			 * The method decodes the data in the buffer and returns the stateMap.
-			 *
-			 * \param state The state map to be filled.
-			 */
-			virtual bool decode(labust::vehicles::stateMapPtr state) = 0;
+    <!--<arg name="use_ident" default="0"/>
+    <arg name="use_joy" default="0"/>-->
 
-			/**
-			 * The input buffer.
-			 */
-			std::vector<unsigned char> inputBuffer;
-			/**
-			 * The output buffer.
-			 */
-			std::vector<unsigned char> outputBuffer;
-		};
+    <!-- ========================================================= -->
+    <!-- == Nu Manual node ======================================= -->
+    <!-- ========================================================= -->
 
-		typedef boost::shared_ptr<VRComms> VRCommsPtr;
-	}
-}
+    <node 
+        pkg="videoray" 
+        type="videoray_node" 
+        name="videoray_node">
+	</node>
 
-/* VRCOMMS_HPP_ */
-#endif
+    <!-- ========================================================= -->
+    <!-- == Ref Manual node ====================================== -->
+    <!-- ========================================================= -->
+<!--
+    <node 
+        pkg="labust_control" 
+        type="ref_manual" 
+        name="ManualStateRef" >
+
+	   <remap from="Enable" to="REF_enable" />
+	</node>-->
+
+
+
+
+</launch>

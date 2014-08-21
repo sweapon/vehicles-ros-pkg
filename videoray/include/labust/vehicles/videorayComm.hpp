@@ -43,7 +43,13 @@
 #ifndef VIDEORAYCOMM_HPP_
 #define VIDEORAYCOMM_HPP_
 
+#include <bitset>
+
+#include <ros/ros.h>
+//#include <auv_msgs/NavSts.h>
+
 #include <boost/shared_ptr.hpp>
+#include <boost/array.hpp>
 #include <labust/math/NumberManipulation.hpp>
 
 namespace labust
@@ -69,6 +75,15 @@ namespace labust
 			 */
 			enum {port = 0, stbd, vert, light};
 			/**
+			 * Typedef for the videoray state vector.
+			 */
+			typedef boost::array<double, 2> StateVec;
+			typedef boost::shared_ptr<StateVec> StateVecPtr;
+			/**
+			 * State enumerations.
+			 */
+		//	enum {heading = 0, depthPressure};
+			/**
 			 * The method encodes the given into the output buffer.
 			 *
 			 * \param thrust The given thrust values
@@ -80,7 +95,9 @@ namespace labust
 			 *
 			 * \param state The state map to be filled.
 			 */
-			virtual bool decode(labust::vehicles::stateMapPtr state) = 0;
+			//virtual bool decode(labust::vehicles::stateMapPtr state) = 0;
+			virtual bool decode(StateVecPtr state) = 0;
+
 
 			/**
 			 * The input buffer.
@@ -90,6 +107,8 @@ namespace labust
 			 * The output buffer.
 			 */
 			std::vector<unsigned char> outputBuffer;
+
+			double heading, depthPressure;
 		};
 
 		typedef boost::shared_ptr<VRComms> VRCommsPtr;
@@ -159,7 +178,9 @@ namespace labust
 			/**
 			 * \override labust::vehicles::VRComms::decode
 			 */
-			bool decode(labust::vehicles::stateMapPtr state);
+			bool decode(StateVecPtr state);
+
+
 
 		private:
 			/**
@@ -204,20 +225,29 @@ namespace labust
 		  return true;
 		}
 
-		bool VRSerialComms::decode(labust::vehicles::stateMapPtr state)
+		bool VRSerialComms::decode(StateVecPtr state)
 		{
-			using namespace labust::vehicles::state;
+			//using namespace labust::vehicles::state;
 			//Check if the data header is ok.
+			ROS_ERROR("DEbug3-1");
 			enum {yaw_byte = 3, depth_byte = 5};
 
 			//Get heading and adjust
 		  short int value = 360 - (inputBuffer[yaw_byte] + 256*inputBuffer[yaw_byte+1]);
-		  if (value < 90) (*state)[heading]= value + 270; else (*state)[heading]= value - 90;
-		  (*state)[yaw] = labust::math::wrapRad((*state)[heading]*M_PI/180);
+			ROS_ERROR("DEbug3-1-1");
+
+		//  if (value < 90) (*state)[heading]= value + 270; else (*state)[heading]= value - 90;
+			if (value < 90) heading = value + 270; else heading = value - 90;
+			ROS_ERROR("DEbug3-1-2");
+
+		  //(*state)[yaw] = labust::math::wrapRad((*state)[heading]*M_PI/180);
+//		  if (value < 90) state->orientation.yaw = value + 270; else state->orientation.yaw = value - 90;
+//		  state->orientation.yaw = labust::math::wrapRad(state->orientation.yaw*M_PI/180);
 
 		  //Get pressure and calculate depth.
-		  (*state)[depthPressure] = inputBuffer[depth_byte] + 256*inputBuffer[depth_byte+1];
-
+		  //(*state)[depthPressure] = inputBuffer[depth_byte] + 256*inputBuffer[depth_byte+1];
+		  depthPressure = inputBuffer[depth_byte] + 256*inputBuffer[depth_byte+1];
+		  ROS_ERROR("DEbug3-2");
 		  return true;
 		}
 	}
