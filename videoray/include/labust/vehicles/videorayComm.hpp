@@ -94,7 +94,6 @@ namespace labust
 			 *
 			 * \param state The state map to be filled.
 			 */
-			//virtual bool decode(labust::vehicles::stateMapPtr state) = 0;
 			virtual bool decode(StateVecPtr state) = 0;
 
 
@@ -224,9 +223,8 @@ namespace labust
 
 		bool VRSerialComms::decode(StateVecPtr state)
 		{
-			//using namespace labust::vehicles::state;
-			//Check if the data header is ok.
 
+			//Check if the data header is ok.
 			enum {yaw_byte = 3, depth_byte = 5};
 
 			//Get heading and adjust

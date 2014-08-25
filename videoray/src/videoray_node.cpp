@@ -61,61 +61,26 @@ namespace labust
 		class VideoRay
 		{
 		public:
-			/**
-			 * Main constructor. Take a XML reader pointer and configures the controller.
-			 *
-			 * \param reader Pointer to the XMLReader object containing the parameters.
-			 * \param id Identification class.
-			 */
+
 			VideoRay(std::string portName, int baud, int flowControl, int parity, int stopBits, int dataBits);
-			/**
-			 * Generic destructor.
-			 */
+
 			~VideoRay();
 
-			/**
-			 * \overload labust::vehicles::Driver::setTAU
-			 */
+
 			void setTAU(auv_msgs::BodyForceReq tau);
-			/**
-			 * \overload labust::vehicles::Driver::getState
-			 */
+
 			void getState(auv_msgs::NavSts& state);
-      /**
-       *	\overload labust::vehicles::Driver::setGuidance
-       */
-		//	void setGuidance(const labust::vehicles::guidanceMapRef guidance);
-      /**
-       * \overload labust:::vehicles::Driver::setCommand
-       */
-		//	void setCommand(const labust::apps::stringRef commands);
-      /**
-       * \overload labust::vehicles::Driver::getData
-       */
-		//	void getData(const labust::apps::stringPtr data);
 
 			void onJoy(const sensor_msgs::Joy::ConstPtr& data);
 
 		private:
 
-			/**
-			 * The method configures the driver through a XML config file.
-			 *
-			 * \param reader Pointer to the XMLReader object containing the parameters.
-			 * \param id Identification class.
-			 */
 			void configure();
-			/**
-			 * The method handles incoming data.
-			 *
-			 * \param e The error that occured during transfer.
-			 * \param transferred Number of bytes that were transfered.
-			 */
+
 			void handleInput(const boost::system::error_code& error, const size_t transferred);
-			/**
-			 * The method starts the receiving loop.
-			 */
+
 			void start_receive();
+
 			/**
 			 * The method calculates the depth scale parameters.
 			 *
@@ -159,7 +124,6 @@ namespace labust
 			/**
 			 * The vehicle state
 			 */
-			//labust::vehicles::stateMapPtr states;
 			VRComms::StateVecPtr states;
 			/**
 			 * Depth scale parameters.
@@ -182,7 +146,6 @@ namespace labust
 
 			bool flag;
 		};
-
 
 
 		VideoRay::VideoRay(std::string portName, int baud, int flowControl, int parity, int stopBits, int dataBits):io(),
@@ -235,14 +198,12 @@ namespace labust
 			setTAU(tau);
 		}
 
-		void VideoRay::depthScale(int low, int high, double psiHigh, double psiLow)
-		{
+		void VideoRay::depthScale(int low, int high, double psiHigh, double psiLow){
 			xDepth = (psiHigh - psiLow)/(high-low);
 			yDepth = psiLow - (low*xDepth);
 		}
 
-		void VideoRay::start_receive()
-		{
+		void VideoRay::start_receive(){
 			//boost::asio::async_read(port, boost::asio::buffer(comms->inputBuffer),
 			//		boost::asio::transfer_all(),boost::bind(&VideoRay::handleInput,this,_1,_2));
 			//io.poll();
@@ -284,18 +245,16 @@ namespace labust
 
 		void VideoRay::getState(auv_msgs::NavSts& state){
 
-			//state.position.depth = ((*states)[VRComms::depthPressure]*xDepth + yDepth)/1.46;
-			//state.orientation.yaw = (*states)[VRComms::heading]; // ovo je još uvijek u stupnjevima samo za test
+			//state.position.depth = (comms->depthPressure*xDepth + yDepth)/1.46; // provjeri točnost ovoga
+			state.position.depth = comms->depthPressure;
 
-			state.position.depth = (comms->depthPressure*xDepth + yDepth)/1.46; // provjeri točnost ovoga
-			state.orientation.yaw = comms->heading; // ovo je još uvijek u stupnjevima samo za test
+			//state.orientation.yaw = comms->heading; // ovo je još uvijek u stupnjevima samo za test
+			state.orientation.yaw = labust::math::wrapRad(comms->heading*M_PI/180);
 
 		}
 
-		void VideoRay::handleInput(const boost::system::error_code& error, const size_t transferred)
-		{
-			ROS_ERROR("DEbug1");
-			//std::cout<<"Input."<<std::endl;
+		void VideoRay::handleInput(const boost::system::error_code& error, const size_t transferred){
+
 			if (!error && (transferred == comms->inputBuffer.size())){
 
 				comms->decode(states);
@@ -339,8 +298,8 @@ namespace labust
 }
 
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]){
+
 	ros::init(argc,argv,"videoray_node");
 	ros::NodeHandle nh;
 
@@ -354,7 +313,6 @@ int main(int argc, char* argv[])
 
 	/* Start serial communication with VideoRay */
 	labust::vehicles::VideoRay VR("/dev/ttyUSB0", 9600, 0, 0, 1, 8);
-	//labust::vehicles::VideoRay VR("/dev/pts/5", 9600, 0, 0, 1, 8);
 
 	ros::Subscriber subJoy = nh.subscribe<sensor_msgs::Joy>("joy",1,&labust::vehicles::VideoRay::onJoy,&VR);
 
