@@ -41,13 +41,7 @@
 *********************************************************************/
 
 #include <ros/ros.h>
-
-#include <boost/system/system_error.hpp>
-#include <boost/asio.hpp>
-
 #include <labust/drivers/ethernetRelayDriver.hpp>
-
-
 
 int main(int argc, char* argv[]){
 
@@ -56,54 +50,8 @@ int main(int argc, char* argv[]){
 
 	using namespace labust::drivers;
 
-	std::vector<bool> test(8,0);
-	test[1] = true;
-
 	EthernetRelayDriver ERD("192.168.1.4", 17494);
 
-
-//	ERD.relayState = test;
-//
-//	if(ERD.encode(EthernetRelayDriver::digitalSet)){
-//		ROS_ERROR("Poslano");
-//	}
-//
-//	ERD.decode();
-
-
-
-//	/*<!-- Serial config parameters -->
-//	<param name="PortName" value="/dev/ttyUSB0"/>
-//	<param name="BaudRate" value="9600"/>
-//	<param name="FlowControl" value="none"/>
-//	<param name="Parity" value="none"/>
-//	<param name="StopBits" value="1"/>
-//	<param name="DataBits" value="8"/>*/
-//
-//	/* Start serial communication with VideoRay */
-//	labust::vehicles::VideoRay VR("/dev/ttyUSB0", 9600, 0, 0, 1, 8);
-//
-//	ros::Subscriber subJoy = nh.subscribe<sensor_msgs::Joy>("joy",1,&labust::vehicles::VideoRay::onJoy,&VR);
-//
-//	auv_msgs::NavSts state;
-//
-//	ros::Rate rate(1/0.1);
-//
-//	while(ros::ok()){
-//
-//		if(VR.flag){
-//			VR.getState(state);
-//			VR.flag = false;
-//		}
-//
-//		ROS_ERROR("Orientation %f", state.orientation.yaw);
-//		ROS_ERROR("depth %f", state.position.depth);
-//
-//		rate.sleep();
-//		ros::spinOnce();
-//	}
-
 	ros::spin();
-
 	return 0;
 }

@@ -44,7 +44,7 @@
 #define ETHERNETRELAYDRIVER_HPP_
 
 #include <ros/ros.h>
-#include <std_msgs/Byte.h>
+#include <std_msgs/UInt8.h>
 #include <boost/asio.hpp>
 
 using boost::asio::ip::tcp;
@@ -76,7 +76,7 @@ namespace labust{
 			void write();
 
 			/* ROS callback for relay control */
-			void onRelayRequest(const std_msgs::Byte::ConstPtr& data);
+			void onRelayRequest(const std_msgs::UInt8::ConstPtr& data);
 
 			/* The input buffer. */
 			std::vector<unsigned char> inputBuffer;
@@ -140,7 +140,7 @@ namespace labust{
 			configure(host, port);
 
 			ros::NodeHandle nh;
-			subRelayRequest = nh.subscribe<std_msgs::Byte>("relayRequest",1,&EthernetRelayDriver::onRelayRequest,this);
+			subRelayRequest = nh.subscribe<std_msgs::UInt8>("relayRequest",1,&EthernetRelayDriver::onRelayRequest,this);
 		}
 
 		EthernetRelayDriver::~EthernetRelayDriver(){
@@ -233,11 +233,11 @@ namespace labust{
 			boost::asio::write(socket, boost::asio::buffer(outputBuffer, outputBuffer.size()));
 		}
 
-		void EthernetRelayDriver::onRelayRequest(const std_msgs::Byte::ConstPtr& data){
+		void EthernetRelayDriver::onRelayRequest(const std_msgs::UInt8::ConstPtr& data){
 
 			uint8_t tmp = 0;
 
-			for(std::vector<bool>::size_type i = 0; i != relayState.size(); i++){
+			for(std::vector<uint8_t>::size_type i = 0; i != relayState.size(); i++){
 
 				tmp = (data->data) & (0x1<<i);
 				relayState[i] = (tmp)?1:0;
