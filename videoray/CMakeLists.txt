@@ -8,10 +8,11 @@ find_package(catkin REQUIRED COMPONENTS
     auv_msgs 
     roscpp
     dynamic_reconfigure 
+    diagnostic_msgs
     snippets)
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system serialization)
 find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
 
@@ -65,7 +66,7 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 ## Specify additional locations of header files
 include_directories(include ${catkin_INCLUDE_DIRS})
 
@@ -77,6 +78,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 ## Declare a cpp executable
 
 add_executable(videoray_node src/videoray_node.cpp)
+add_executable(bmotor_node src/brushless/BMotor.cpp)
 
 ## Add dependencies to the executable
 #add_dependencies(pladypos_node ${PROJECT_NAME}_gencpp)
@@ -89,6 +91,7 @@ endif()
 #target_link_libraries(pladypos_node ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARY})
 #target_link_libraries(pladypos_node_v2 ${catkin_LIBRARIES})
 target_link_libraries(videoray_node ${catkin_LIBRARIES})
+target_link_libraries(bmotor_node ${catkin_LIBRARIES} ${Boost_SERIALIZATION_LIBRARY})
 
 #############
 ## Install ##
