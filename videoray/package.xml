@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>pladypos</name>
+  <name>videoray</name>
   <version>0.0.1</version>
-  <description>The driver for the PlaDyPos platform.</description>
+  <description>Videoray ROS nodes package</description>
 
   <maintainer email="dula.nad@gmail.com">Gyula Nagy</maintainer>
   <license>BSD</license>

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pladypos)
+project(videoray)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -8,10 +8,11 @@ find_package(catkin REQUIRED COMPONENTS
     auv_msgs 
     roscpp
     dynamic_reconfigure 
+    diagnostic_msgs
     snippets)
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system serialization)
 find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
 
@@ -46,7 +47,7 @@ include_directories(${Eigen_INCLUDE_DIRS})
 ###################################################
 ## Dynamic reconfigure
 ###################################################
-generate_dynamic_reconfigure_options(cfg/ThrusterMapping.cfg cfg/DPSettings.cfg)
+#generate_dynamic_reconfigure_options(cfg/ThrusterMapping.cfg cfg/DPSettings.cfg)
 
 ###################################################
 ## Declare things to be passed to other projects ##
@@ -65,7 +66,7 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 ## Specify additional locations of header files
 include_directories(include ${catkin_INCLUDE_DIRS})
 
@@ -75,23 +76,22 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 # )
 
 ## Declare a cpp executable
-add_executable(pladypos_node src/pladypos_node.cpp src/PlaDyPosNode.cpp)
-add_executable(pladypos_node_v2 src/PlaDyPosNode_v2.cpp)
-add_executable(pladypos_node_v3 src/PlaDyPosNode_v3.cpp)  
-#add_executable(nav_node src/nav_node.cpp)
+
+add_executable(videoray_node src/videoray_node.cpp)
+add_executable(bmotor_node src/brushless/BMotor.cpp)
 
 ## Add dependencies to the executable
-add_dependencies(pladypos_node ${PROJECT_NAME}_gencpp)
+#add_dependencies(pladypos_node ${PROJECT_NAME}_gencpp)
 if (DEFINED catkin_EXPORTED_TARGETS)
- add_dependencies(pladypos_node_v3 ${catkin_EXPORTED_TARGETS})
- add_dependencies(pladypos_node_v2 ${catkin_EXPORTED_TARGETS})
- add_dependencies(pladypos_node ${catkin_EXPORTED_TARGETS})
+ add_dependencies(videoray_node ${catkin_EXPORTED_TARGETS})
 endif()
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(pladypos_node ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARY})
-target_link_libraries(pladypos_node_v2 ${catkin_LIBRARIES})
-target_link_libraries(pladypos_node_v3 ${catkin_LIBRARIES})
+
+#target_link_libraries(pladypos_node ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARY})
+#target_link_libraries(pladypos_node_v2 ${catkin_LIBRARIES})
+target_link_libraries(videoray_node ${catkin_LIBRARIES})
+target_link_libraries(bmotor_node ${catkin_LIBRARIES} ${Boost_SERIALIZATION_LIBRARY})
 
 #############
 ## Install ##

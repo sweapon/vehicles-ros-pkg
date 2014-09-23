@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pladypos)
+project(lupis)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -46,7 +46,7 @@ include_directories(${Eigen_INCLUDE_DIRS})
 ###################################################
 ## Dynamic reconfigure
 ###################################################
-generate_dynamic_reconfigure_options(cfg/ThrusterMapping.cfg cfg/DPSettings.cfg)
+#generate_dynamic_reconfigure_options(cfg/ThrusterMapping.cfg cfg/DPSettings.cfg)
 
 ###################################################
 ## Declare things to be passed to other projects ##
@@ -75,23 +75,23 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 # )
 
 ## Declare a cpp executable
-add_executable(pladypos_node src/pladypos_node.cpp src/PlaDyPosNode.cpp)
-add_executable(pladypos_node_v2 src/PlaDyPosNode_v2.cpp)
-add_executable(pladypos_node_v3 src/PlaDyPosNode_v3.cpp)  
-#add_executable(nav_node src/nav_node.cpp)
+#add_executable(pladypos_node src/pladypos_node.cpp src/PlaDyPosNode.cpp)
+#add_executable(pladypos_node_v2 src/PlaDyPosNode_v2.cpp)
+#add_executable(pladypos_node_v3 src/PlaDyPosNode_v3.cpp)  
+add_executable(uros_logger_node src/uros_logger.cpp)
 
 ## Add dependencies to the executable
-add_dependencies(pladypos_node ${PROJECT_NAME}_gencpp)
+#add_dependencies(pladypos_node ${PROJECT_NAME}_gencpp)
 if (DEFINED catkin_EXPORTED_TARGETS)
- add_dependencies(pladypos_node_v3 ${catkin_EXPORTED_TARGETS})
- add_dependencies(pladypos_node_v2 ${catkin_EXPORTED_TARGETS})
- add_dependencies(pladypos_node ${catkin_EXPORTED_TARGETS})
+# add_dependencies(pladypos_node_v3 ${catkin_EXPORTED_TARGETS})
+# add_dependencies(pladypos_node_v2 ${catkin_EXPORTED_TARGETS})
+ add_dependencies(uros_logger_node ${catkin_EXPORTED_TARGETS})
 endif()
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(pladypos_node ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARY})
-target_link_libraries(pladypos_node_v2 ${catkin_LIBRARIES})
-target_link_libraries(pladypos_node_v3 ${catkin_LIBRARIES})
+#target_link_libraries(pladypos_node ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARY})
+#target_link_libraries(pladypos_node_v2 ${catkin_LIBRARIES})
+target_link_libraries(uros_logger_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##
