@@ -110,7 +110,8 @@ public:
 	void writeLog(){
 
 		std::stringstream ss;
-		ss <<std::time(0)<<","<<latLonData.global_position.latitude<<","<<latLonData.global_position.longitude<<","<<latLonData.position.depth<<","<<rhodamineData<<",0,0";
+		ss << std::fixed;
+		ss <<std::time(0)<<","<<std::setprecision(6)<<latLonData.global_position.latitude<<","<<latLonData.global_position.longitude<<","<<latLonData.position.depth<<","<<rhodamineData<<",0,0";
 		log_file << ss.str() << std::endl;
 
 	}
