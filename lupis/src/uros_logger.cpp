@@ -75,7 +75,7 @@ public:
 		/* Generate log filename */
 		boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H-%M");
 		ss.imbue(std::locale(ss.getloc(), facet));
-		ss << "/home/stdops/lauv-lupis-2/logs/log_" << boost::posix_time::second_clock::universal_time() << ".csv";
+		ss << "/home/stdops/logs/lauv-lupis-2/log_" << boost::posix_time::second_clock::universal_time() << ".csv";
 
 		/* Open log file */
 		log_file.open(ss.str().c_str(), std::ios::out);
