@@ -47,6 +47,8 @@
 #include <std_msgs/UInt8.h>
 #include <boost/asio.hpp>
 
+#include <misc_msgs/RelayControl.h>
+
 using boost::asio::ip::tcp;
 
 namespace labust{
@@ -78,6 +80,9 @@ namespace labust{
 			/* ROS callback for relay control */
 			void onRelayRequest(const std_msgs::UInt8::ConstPtr& data);
 
+			/** Relay control service */
+			bool relayService(misc_msgs::RelayControl::Request &req, misc_msgs::RelayControl::Response &res);
+
 			/* The input buffer. */
 			std::vector<unsigned char> inputBuffer;
 
@@ -93,7 +98,11 @@ namespace labust{
 			/* TCP/IP socket */
 			tcp::socket socket;
 
+			/** Subscribers */
 			ros::Subscriber subRelayRequest;
+
+			/** Services */
+			ros::ServiceServer srvRelayCommand;
 
 			enum {digitalActive = 0, digitalInactive, digitalSet, digitalGet, getVolts};
 		};
@@ -140,7 +149,12 @@ namespace labust{
 			configure(host, port);
 
 			ros::NodeHandle nh;
+
+			/** Subscribers */
 			subRelayRequest = nh.subscribe<std_msgs::UInt8>("relayRequest",1,&EthernetRelayDriver::onRelayRequest,this);
+
+			/** Services */
+			srvRelayCommand = nh.advertiseService("etherent_relay", &EthernetRelayDriver::relayService,this);
 		}
 
 		EthernetRelayDriver::~EthernetRelayDriver(){
@@ -233,6 +247,7 @@ namespace labust{
 			boost::asio::write(socket, boost::asio::buffer(outputBuffer, outputBuffer.size()));
 		}
 
+		/** Topic for relay control */
 		void EthernetRelayDriver::onRelayRequest(const std_msgs::UInt8::ConstPtr& data){
 
 			uint8_t tmp = 0;
@@ -246,6 +261,13 @@ namespace labust{
 			if(encode(digitalSet)){
 				//decode();
 			}
+		}
+
+		/** Service for relay control */
+		bool EthernetRelayDriver::relayService(misc_msgs::RelayControl::Request &req, misc_msgs::RelayControl::Response &res){
+
+			res.result = encode((req.relayState)?digitalActive:digitalInactive, req.relayNum, req.timeout);
+			return true;
 		}
 	}
 }

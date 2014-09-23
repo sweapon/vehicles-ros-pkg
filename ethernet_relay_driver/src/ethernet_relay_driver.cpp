@@ -27,7 +27,7 @@
 *     from this software without specific prior written permission.
 *
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-*  "AS IS" AND ANExternalEventY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
 *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -46,11 +46,16 @@
 int main(int argc, char* argv[]){
 
 	ros::init(argc,argv,"ethernet_relay_node");
-	ros::NodeHandle nh;
+	ros::NodeHandle nh, ph("~");
+
+	std::string address("192.168.1.4");
+	int port(17494);
+	ph.param("ip",address, address);
+	ph.param("port", port, port);
 
 	using namespace labust::drivers;
 
-	EthernetRelayDriver ERD("192.168.1.4", 17494);
+	EthernetRelayDriver ERD(address.c_str(), port);
 
 	ros::spin();
 	return 0;

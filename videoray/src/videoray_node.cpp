@@ -145,6 +145,9 @@ namespace labust
 		public:
 
 			bool flag;
+
+			auv_msgs::BodyForceReq lastTau;
+
 		};
 
 
@@ -251,6 +254,7 @@ namespace labust
 			//state.orientation.yaw = comms->heading; // ovo je još uvijek u stupnjevima samo za test
 			state.orientation.yaw = labust::math::wrapRad(comms->heading*M_PI/180);
 
+
 		}
 
 		void VideoRay::handleInput(const boost::system::error_code& error, const size_t transferred){
@@ -293,6 +297,7 @@ namespace labust
 			tau.wrench.torque.z = data->axes[2];
 
 			setTAU(tau);
+			lastTau = tau;
 		}
 	}
 }
@@ -314,7 +319,12 @@ int main(int argc, char* argv[]){
 	/* Start serial communication with VideoRay */
 	labust::vehicles::VideoRay VR("/dev/ttyUSB0", 9600, 0, 0, 1, 8);
 
+	/* Subscribers */
 	ros::Subscriber subJoy = nh.subscribe<sensor_msgs::Joy>("joy",1,&labust::vehicles::VideoRay::onJoy,&VR);
+
+	/* Publishers */
+	ros::Publisher pubTau = nh.advertise<auv_msgs::BodyForceReq>("tauAch", 1);
+	ros::Publisher pubMeas = nh.advertise<auv_msgs::NavSts>("meas", 1);
 
 	auv_msgs::NavSts state;
 
@@ -325,10 +335,13 @@ int main(int argc, char* argv[]){
 		if(VR.flag){
 			VR.getState(state);
 			VR.flag = false;
-		}
 
-		ROS_ERROR("Orientation %f", state.orientation.yaw);
-		ROS_ERROR("depth %f", state.position.depth);
+			ROS_ERROR("Orientation %f", state.orientation.yaw);
+			ROS_ERROR("depth %f", state.position.depth);
+
+			pubTau.publish(VR.lastTau);
+			pubMeas.publish(state);
+		}
 
 		rate.sleep();
 		ros::spinOnce();
