@@ -75,7 +75,7 @@ public:
 		/* Generate log filename */
 		boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H-%M");
 		ss.imbue(std::locale(ss.getloc(), facet));
-		ss << "log_" << boost::posix_time::second_clock::universal_time() << ".csv";
+		ss << "/home/stdops/lauv-lupis-2/logs/log_" << boost::posix_time::second_clock::universal_time() << ".csv";
 
 		/* Open log file */
 		log_file.open(ss.str().c_str(), std::ios::out);
@@ -93,7 +93,7 @@ public:
 			log_file << "%" << "LAUV-LUPIS,Rhodamine,1" << std::endl;
 			log_file << ss.str() << std::endl;
 			log_file << "%-9999" << std::endl;
-			log_file << "%Time (unix time), Latitude (decimal degree), Longitude(decimal degree), Depth (m), Rhodamine (ppb),Crude, Refined" << std::endl;
+			log_file << "%Time (unix time), Latitude (decimal degree), Longitude(decimal degree), Depth (m), Rhodamine (ppb), Crude, Refined" << std::endl;
 
 			// Test line
 //			std::time_t t = std::time(0);
