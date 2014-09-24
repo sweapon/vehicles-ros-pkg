@@ -55,11 +55,12 @@ class UROSLogger{
 
 public:
 
-	UROSLogger():rhodamineData(0.0){
+	UROSLogger():rhodamineData(0.0), temperatureData(0.0){
 
 		ros::NodeHandle nh;
 
 		subRhodamineData = nh.subscribe<std_msgs::Float32>("adc", 1, &UROSLogger::onRhodamineData, this);
+		subTemperatureData = nh.subscribe<std_msgs::Float32>("temp", 1, &UROSLogger::onTemperatureData, this);
 		subPositionData = nh.subscribe<auv_msgs::NavSts>("state_out",1, &UROSLogger::onPositionData, this);
 
 	}
@@ -92,8 +93,8 @@ public:
 			/* Write header data to log */
 			log_file << "%" << "LAUV-LUPIS,Rhodamine,1" << std::endl;
 			log_file << ss.str() << std::endl;
-			log_file << "%-9999" << std::endl;
-			log_file << "%Time (unix time), Latitude (decimal degree), Longitude(decimal degree), Depth (m), Rhodamine (ppb), Crude, Refined" << std::endl;
+			log_file << "%-1" << std::endl;
+			log_file << "%Time (unix time), Latitude (decimal degree), Longitude(decimal degree), Depth (m), Rhodamine (ppb), Crude, Refined, temperature" << std::endl;
 
 			// Test line
 //			std::time_t t = std::time(0);
@@ -111,7 +112,7 @@ public:
 
 		std::stringstream ss;
 		ss << std::fixed;
-		ss <<std::time(0)<<","<<std::setprecision(6)<<latLonData.global_position.latitude<<","<<latLonData.global_position.longitude<<","<<latLonData.position.depth<<","<<rhodamineData<<",0,0";
+		ss <<std::time(0)<<","<<std::setprecision(6)<<latLonData.global_position.latitude<<","<<latLonData.global_position.longitude<<","<<latLonData.position.depth<<","<<rhodamineData<<",-1,-1,"<<temperatureData;
 		log_file << ss.str() << std::endl;
 
 	}
@@ -126,11 +127,17 @@ public:
 			writeLog();
 	}
 
+	void onTemperatureData(const std_msgs::Float32::ConstPtr& data){
+		temperatureData = data->data;
+
+	}
+
 	std::ofstream log_file;
 
-	ros::Subscriber subRhodamineData, subPositionData;
+	ros::Subscriber subRhodamineData, subPositionData, subTemperatureData;
 
 	double rhodamineData;
+	double temperatureData;
 	auv_msgs::NavSts latLonData;
 
 
