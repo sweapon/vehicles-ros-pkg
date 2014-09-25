@@ -1,6 +1,6 @@
 <launch>
     <node pkg="rosserial_python" type="serial_node.py" name="arduino" args="/dev/ttyACM1" />
-    <node pkg="pladypos" name="pladypos_node" type="pladypos_node_v2">
+    <node pkg="pladypos" name="pladypos_node" type="pladypos_node_v3">
       <param name="maxThrust" value="1"/>
       <param name="minThrust" value="-1"/>
       <param name="max_cap" value="0.85"/>
