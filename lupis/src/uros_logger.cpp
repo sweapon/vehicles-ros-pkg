@@ -50,17 +50,18 @@
 
 #include <std_msgs/Float32.h>
 #include <auv_msgs/NavSts.h>
+#include <sensor_msgs/Temperature.h>
 
 class UROSLogger{
 
 public:
 
-	UROSLogger():rhodamineData(0.0), temperatureData(0.0){
+	UROSLogger():rhodamineData(-1.0), temperatureData(-1.0), counter(0), badReading(-1.0){
 
 		ros::NodeHandle nh;
 
 		subRhodamineData = nh.subscribe<std_msgs::Float32>("adc", 1, &UROSLogger::onRhodamineData, this);
-		subTemperatureData = nh.subscribe<std_msgs::Float32>("temp", 1, &UROSLogger::onTemperatureData, this);
+		subTemperatureData = nh.subscribe<sensor_msgs::Temperature>("temp", 1, &UROSLogger::onTemperatureData, this);
 		subPositionData = nh.subscribe<auv_msgs::NavSts>("state_out",1, &UROSLogger::onPositionData, this);
 
 	}
@@ -91,10 +92,10 @@ public:
 			ss << boost::posix_time::second_clock::universal_time();
 
 			/* Write header data to log */
-			log_file << "%" << "LAUV-LUPIS,Rhodamine,1" << std::endl;
-			log_file << ss.str() << std::endl;
+			log_file << "%" << "LAUV-LUPIS-1, Rhodamine, 10 Hz" << std::endl;
+			log_file << "%" << ss.str() << std::endl;
 			log_file << "%-1" << std::endl;
-			log_file << "%Time (unix time), Latitude (decimal degree), Longitude(decimal degree), Depth (m), Rhodamine (ppb), Crude, Refined, temperature" << std::endl;
+			log_file << "%Time (unix time), Latitude (decimal degree), Longitude(decimal degree), Depth (m), Rhodamine (ppb), Crude, Refined, Temperature (C)" << std::endl;
 
 			// Test line
 //			std::time_t t = std::time(0);
@@ -123,12 +124,14 @@ public:
 
 	void onPositionData(const auv_msgs::NavSts::ConstPtr& data){
 		latLonData = *data;
-		if(log_file.is_open())
-			writeLog();
+                if((counter++)%20 == 0){
+			if(log_file.is_open())
+				writeLog();
+		}
 	}
 
-	void onTemperatureData(const std_msgs::Float32::ConstPtr& data){
-		temperatureData = data->data;
+	void onTemperatureData(const sensor_msgs::Temperature::ConstPtr& data){
+		temperatureData = data->temperature;
 
 	}
 
@@ -140,6 +143,9 @@ public:
 	double temperatureData;
 	auv_msgs::NavSts latLonData;
 
+        unsigned int counter;
+
+        const double badReading;
 
 };
 

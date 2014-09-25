@@ -7,6 +7,7 @@ project(lupis)
 find_package(catkin REQUIRED COMPONENTS 
     auv_msgs 
     roscpp
+    sensor_msgs
     dynamic_reconfigure 
     snippets)
 
