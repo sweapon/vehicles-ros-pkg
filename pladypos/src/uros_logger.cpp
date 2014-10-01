@@ -50,19 +50,18 @@
 
 #include <std_msgs/Float32.h>
 #include <auv_msgs/NavSts.h>
-#include <sensor_msgs/Temperature.h>
 
 class UROSLogger{
 
 public:
 
-	UROSLogger():rhodamineData(-1.0), temperatureData(-1.0), counter(0), badReading(-1.0){
+	UROSLogger():rhodamineData(-1.0), temperatureData(-1.0){
 
 		ros::NodeHandle nh;
 
-		subRhodamineData = nh.subscribe<std_msgs::Float32>("adc", 1, &UROSLogger::onRhodamineData, this);
-		subTemperatureData = nh.subscribe<sensor_msgs::Temperature>("temp", 1, &UROSLogger::onTemperatureData, this);
-		subPositionData = nh.subscribe<auv_msgs::NavSts>("state_out",1, &UROSLogger::onPositionData, this);
+		subRhodamineData = nh.subscribe<std_msgs::Float32>("rhodamine_adc", 1, &UROSLogger::onRhodamineData, this);
+		subTemperatureData = nh.subscribe<std_msgs::Float32>("temp", 1, &UROSLogger::onTemperatureData, this);
+		subPositionData = nh.subscribe<auv_msgs::NavSts>("rhodamine_latlon",1, &UROSLogger::onPositionData, this);
 
 	}
 
@@ -77,7 +76,7 @@ public:
 		/* Generate log filename */
 		boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H-%M");
 		ss.imbue(std::locale(ss.getloc(), facet));
-		ss << "/home/stdops/logs/lauv-lupis-2/log_" << boost::posix_time::second_clock::universal_time() << ".csv";
+		ss << "/home/stdops/logs/pladypos/log_" << boost::posix_time::second_clock::universal_time() << ".csv";
 
 		/* Open log file */
 		log_file.open(ss.str().c_str(), std::ios::out);
@@ -92,10 +91,10 @@ public:
 			ss << boost::posix_time::second_clock::universal_time();
 
 			/* Write header data to log */
-			log_file << "%" << "LAUV-LUPIS-1, Rhodamine, 10 Hz" << std::endl;
-			log_file << "%" << ss.str() << std::endl;
+			log_file << "%" << "Pladypos, data from LAUV-LUPIS,Rhodamine, ~0.5 Hz" << std::endl;
+			log_file << ss.str() << std::endl;
 			log_file << "%-1" << std::endl;
-			log_file << "%Time (unix time), Latitude (decimal degree), Longitude(decimal degree), Depth (m), Rhodamine (ppb), Crude, Refined, Temperature (C)" << std::endl;
+			log_file << "%Time (unix time), Latitude (decimal degree), Longitude(decimal degree), Depth (m), Rhodamine (ppb), Crude, Refined, temperature" << std::endl;
 
 			// Test line
 //			std::time_t t = std::time(0);
@@ -124,14 +123,12 @@ public:
 
 	void onPositionData(const auv_msgs::NavSts::ConstPtr& data){
 		latLonData = *data;
-                if((counter++)%20 == 0){
-			if(log_file.is_open())
-				writeLog();
-		}
+		if(log_file.is_open())
+			writeLog();
 	}
 
-	void onTemperatureData(const sensor_msgs::Temperature::ConstPtr& data){
-		temperatureData = data->temperature;
+	void onTemperatureData(const std_msgs::Float32::ConstPtr& data){
+		temperatureData = data->data;
 
 	}
 
@@ -143,9 +140,6 @@ public:
 	double temperatureData;
 	auv_msgs::NavSts latLonData;
 
-        unsigned int counter;
-
-        const double badReading;
 
 };
 
