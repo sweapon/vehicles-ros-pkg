@@ -34,6 +34,7 @@
 #ifndef BMOTOR_HPP_
 #define BMOTOR_HPP_
 #include <std_msgs/Float32MultiArray.h>
+#include <diagnostic_msgs/DiagnosticArray.h>
 #include <ros/ros.h>
 
 #include <boost/asio.hpp>
@@ -49,7 +50,9 @@ namespace labust
 		/**
 		 * The class implements the videoray brushless motor driver.
 		 *
-		 * \todo Add configuration of motor IDs
+		 * \todo Add selection between N motor feedbacks in one cycle
+		 * and N motor feedbacks in N cycles
+		 * \todo Add configuration of motor IDs ?
 		 */
 		class BMotor
 		{
@@ -60,7 +63,7 @@ namespace labust
 				csr_byte,
 				size_byte,
 				checksum_byte};
-			enum {syncin = 0x0FF0, syncout = 0x5FF5};
+			enum {syncin = 0x0FF0, syncin2 = 0x0FE0, workaroundSync = 0xE0, syncout = 0x5FF5};
 			enum {chk_len = 4};
 
 		public:
@@ -82,6 +85,8 @@ namespace labust
 			void onHeader(const boost::system::error_code& e, std::size_t size);
 			///Handle the incoming data stream.
 			void onData(const boost::system::error_code& e, std::size_t size);
+			///Handle data sent signal
+			void onSent(const boost::system::error_code& e, std::size_t size);
 
 			///The serial port setup helper method.
 			bool setup_port();
@@ -117,10 +122,14 @@ namespace labust
 			uint8_t networkId;
 			///Maximum and mininum value
 			double max, min;
+			///Maximum temperature flag
+			int maxTemp;
 			///Debug time
 			ros::Time newmsg;
 			///Mutex for the queue
-			boost::mutex queueMux;
+			boost::mutex queueMux, serialMux;
+			///Diagnostics array
+			diagnostic_msgs::DiagnosticArray diagnosticArray;
 		};
 	}
 }
