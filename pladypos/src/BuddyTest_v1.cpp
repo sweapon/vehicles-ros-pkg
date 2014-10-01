@@ -228,6 +228,17 @@ void BuddyNode_v1::onTau(const auv_msgs::BodyForceReq::ConstPtr tau)
 	  if (tauXYN(2) > 0 ) t.windup.yaw = 1; else t.windup.yaw = -1;
 	}
 
+	double posMapping = 1.67;
+	double negMapping = 1;
+	double tzmax((Ub*Ub)/(Un*Un)*maxCap / 2);
+	double tzmin(-tzmax);
+	double tauZ = labust::math::coerce(tau->wrench.force.z, 2*tzmin, 2*tzmax);
+	double tauM = labust::math::coerce(tau->wrench.torque.y, 2*tzmin + fabs(tauZ), 2*tzmax - fabs(tauZ));
+	double tau5 =  0.3*maxCap*labust::vehicles::AffineThruster::getRevsD((tauZ - tauM)/((Ub*Ub)/(Un*Un)),posMapping, negMapping);
+	double tau6 =  0.3*maxCap*labust::vehicles::AffineThruster::getRevsD((tauZ + tauM)/((Ub*Ub)/(Un*Un)),posMapping, negMapping);
+
+	t.wrench.force.z = tau5 + tau6;
+	t.wrench.torque.y = tau6 - tau5;
 	tauAch.publish(t);
 
 	//Tau to Revs
@@ -237,11 +248,10 @@ void BuddyNode_v1::onTau(const auv_msgs::BodyForceReq::ConstPtr tau)
 	for (int i=0; i<pwm->data.size();++i)
 	{
 		//Added
-		pwm->data[i] = 0.3*labust::vehicles::AffineThruster::getRevsD(tauI(i)/((Ub*Ub)/(Un*Un)),posDir[i],negDir[i]);
+		pwm->data[i] = 0.3*labust::vehicles::AffineThruster::getRevsD(tauI(i)/((Ub*Ub)/(Un*Un)),posMapping,negMapping);
 	}
 
-	double tau5 =  0.3*labust::vehicles::AffineThruster::getRevsD(0.5*(tau->wrench.force.z - tau->wrench.torque.y)/((Ub*Ub)/(Un*Un)),1, -1);
-	double tau6 =  0.3*labust::vehicles::AffineThruster::getRevsD(0.5*(tau->wrench.force.z + tau->wrench.torque.y)/((Ub*Ub)/(Un*Un)),1, -1);
+
 	//Add depth and pitch
 	pwm->data.push_back(tau5);
 	pwm->data.push_back(tau6);

@@ -102,7 +102,7 @@ void BMotor::onInit()
 	//Setup publisher
 	diagnostic = nh.advertise<diagnostic_msgs::DiagnosticArray>("diagnostics",1);
 	//Setup subscribers
-	thrustIn = nh.subscribe<std_msgs::Float32MultiArray>("thrust_in",1,&BMotor::onThrustIn,this);
+	thrustIn = nh.subscribe<std_msgs::Float32MultiArray>("pwm_in",1,&BMotor::onThrustIn,this);
 
 	if (setupOk)
 	{

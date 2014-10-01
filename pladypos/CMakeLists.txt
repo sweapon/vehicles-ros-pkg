@@ -82,8 +82,6 @@ add_executable(pladypos_node_v2 src/PlaDyPosNode_v2.cpp)
 add_executable(uros_logger_pladypos_node src/uros_logger.cpp)  
 add_executable(pladypos_node_v3 src/PlaDyPosNode_v3.cpp)
 add_executable(buddy_node_v1 src/BuddyTest_v1.cpp)    
- 
-
 #add_executable(nav_node src/nav_node.cpp)
 
 ## Add dependencies to the executable
@@ -101,9 +99,7 @@ target_link_libraries(pladypos_node_v2 ${catkin_LIBRARIES})
 target_link_libraries(pladypos_node_v3 ${catkin_LIBRARIES})
 
 target_link_libraries(uros_logger_pladypos_node ${catkin_LIBRARIES})
-
 target_link_libraries(buddy_node_v1 ${catkin_LIBRARIES}) 
-
 
 #############
 ## Install ##

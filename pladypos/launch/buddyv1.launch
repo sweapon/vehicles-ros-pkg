@@ -1,0 +1,12 @@
+<launch>
+    <node pkg="videoray" type="bmotor_node" name="brushlees_motor" args="/dev/ttyUSB0">
+  	<remap from="pwm_in" to="pwm_out" />
+    </node>
+    <node pkg="pladypos" name="buddy_node" type="buddy_node_v1">
+      <param name="maxThrust" value="1"/>
+      <param name="minThrust" value="-1"/>
+      <param name="max_cap" value="0.85"/>
+      <remap from="tauIn" to="tauOut" />
+      <!-- <remap from="tauAch" to="tauAchPl" /> -->
+    </node>
+</launch>
