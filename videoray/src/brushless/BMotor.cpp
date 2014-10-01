@@ -55,12 +55,13 @@ PP_LABUST_CLEAN_ARRAY_OSERIALIZATOR_IMPL(boost::archive::binary_oarchive)
 using namespace labust::vehicles;
 
 BMotor::BMotor():
-		port(io),
-		ringBuffer(header_len,0),
-		thrusterId(1,0),
-		networkId(0x81),
-		max(0.1),
-		min(-max)
+										port(io),
+										ringBuffer(header_len,0),
+										thrusterId(1,0),
+										networkId(0x81),
+										max(0.05),
+										min(-max),
+										maxTemp(70)
 {
 	this->onInit();
 }
@@ -87,19 +88,19 @@ void BMotor::onInit()
 	std::string name("thrusterId");
 	if (ph.hasParam(name))
 	{
-			ph.getParam(name, data);
-			if (data.getType() == XmlRpc::XmlRpcValue::TypeArray)
-			{
-				thrusterId.clear();
-				for(size_t i=0; i<data.size(); ++i)
-					thrusterId.push_back(uint8_t(static_cast<int>(data[i])));
-			}
+		ph.getParam(name, data);
+		if (data.getType() == XmlRpc::XmlRpcValue::TypeArray)
+		{
+			thrusterId.clear();
+			for(size_t i=0; i<data.size(); ++i)
+				thrusterId.push_back(uint8_t(static_cast<int>(data[i])));
+		}
 	}
 	ph.param("max", max, max);
 	ph.param("min", min, min);
 
 	//Setup publisher
-	diagnostic = nh.advertise<diagnostic_msgs::DiagnosticStatus>("diagnostic",1);
+	diagnostic = nh.advertise<diagnostic_msgs::DiagnosticArray>("diagnostics",1);
 	//Setup subscribers
 	thrustIn = nh.subscribe<std_msgs::Float32MultiArray>("thrust_in",1,&BMotor::onThrustIn,this);
 
@@ -131,7 +132,7 @@ bool BMotor::setup_port()
 	port.open(portName);
 	port.set_option(serial_port::baud_rate(baud));
 	port.set_option(serial_port::flow_control(
-			serial_port::flow_control::none));
+			serial_port::flow_control::hardware));
 
 	return port.is_open();
 }
@@ -139,19 +140,36 @@ bool BMotor::setup_port()
 void BMotor::onHeader(const boost::system::error_code& e,
 		std::size_t size)
 {
+	ROS_INFO("Send time header: %f", (ros::Time::now()-newmsg).toSec());
 	if (!e)
 	{
 		ROS_INFO("Header read size: %d",size);
+
 		buffer.commit(size);
+
 		if (size == 1)
 		{
 			//Put the new byte on the end of the ring buffer
 			ringBuffer.push_back(buffer.sbumpc());
+			//Test framing
+			if (ringBuffer[0] == workaroundSync)
+			{
+				ROS_WARN("Applying framing workaround.");
+				ringBuffer[0] = 0xF0;
+			}
 		}
 		else
 		{
-			//Copy all data into the buffer
+			//Workaround is possible on each full read
+			int peek = buffer.sgetc();
+			ROS_WARN("FIRST BUFFER ELEMENT:%d", peek);
 			buffer.sgetn(reinterpret_cast<char*>(ringBuffer.data()),size);
+			//Correct the framing error
+			if (peek == workaroundSync)
+			{
+				ROS_WARN("Applying framing workaround.");
+				ringBuffer[0] = 0xF0;
+			}
 		}
 
 		uint16_t* sync = reinterpret_cast<uint16_t*>(ringBuffer.data());
@@ -167,18 +185,27 @@ void BMotor::onHeader(const boost::system::error_code& e,
 			{
 				ROS_INFO("Checksum ok. Payload size: %d", ringBuffer[size_byte]);
 				boost::asio::async_read(port, buffer.prepare(ringBuffer[size_byte]+chk_len),
-							boost::bind(&BMotor::onData,this,_1,_2));
+						boost::bind(&BMotor::onData,this,_1,_2));
 				return;
 			}
 			else
 			{
-				ROS_INFO("Checksum failed: got: %d, calc:%d", *chk, result.checksum());
+				ROS_ERROR("Checksum failed: got: %d, calc:%d", *chk, result.checksum());
 			}
 		}
 		else
 		{
-			ROS_INFO("Check failed.");
+			ROS_ERROR("Check failed.");
+			std::cout<<"RINGBUFFER:";
+			std::cout.width(2);
+			std::cout.fill('0');
+			for(int i=0; i<ringBuffer.size(); ++i)
+			{
+				std::cout<<std::hex<<std::fixed<<int(ringBuffer[i])<<",";
+			}
+			std::cout<<std::endl;
 			ringBuffer.erase(ringBuffer.begin());
+
 			boost::asio::async_read(port,
 					buffer.prepare(1),
 					boost::bind(&BMotor::onHeader,this,_1,_2));
@@ -195,6 +222,8 @@ void BMotor::onHeader(const boost::system::error_code& e,
 void BMotor::onData(const boost::system::error_code& e,
 		std::size_t size)
 {
+
+	ROS_INFO("Send time: %f", (ros::Time::now()-newmsg).toSec());
 	ROS_INFO("Received data size: %d",size);
 	if (!e)
 	{
@@ -213,7 +242,7 @@ void BMotor::onData(const boost::system::error_code& e,
 		{
 			ROS_INFO("Payload checksum ok.");
 
-		  std::istringstream is;
+			std::istringstream is;
 			is.rdbuf()->pubsetbuf(&payload[0],payload.size());
 			boost::archive::binary_iarchive paySer(is, boost::archive::no_header);
 			TStdResponse data;
@@ -229,28 +258,63 @@ void BMotor::onData(const boost::system::error_code& e,
 
 			std::string keys[]={"voltage", "current", "rpm", "temp", "fault"};
 			float values[]={data.bus_v, data.bus_i, data.rpm, data.temp, float(data.fault)};
-			diagnostic_msgs::DiagnosticStatus::Ptr diag(new diagnostic_msgs::DiagnosticStatus());
-			diag->hardware_id="BMotor node";
-			for (int i=0; i<5;++i)
+			diagnostic_msgs::DiagnosticStatus diag;
+			std::stringstream out;
+			//Number of thrusters - remaining in queue
+			// - single that was already sent
+			int lid = thrusterId.size() - output.size() - 1;
+			if ((lid >= 0) && (lid < thrusterId.size()))
 			{
-				//Send diagnostic or add to queue
-				diagnostic_msgs::KeyValue pair;
-				std::ostringstream out;
-				out<<values[i];
-				pair.key = keys[i];
-				pair.value = out.str();
-				diag->values.push_back(pair);
+				out<<"BMotor"<<thrusterId[lid];
+				diag.hardware_id=out.str();
+				diag.name = out.str();
+				if (data.temp >= maxTemp)
+				{
+					diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
+					diag.message = "I'm overheating, bitch!";
+				}
+				diag.message = ((data.rpm < 20)?"Doing static impressions":"Spinnin 'n shit");
+
+				if ((data.rpm < 20) && (data.bus_i > 0.5))
+				{
+					diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
+					diag.message = "I'm stuck, punk!";
+				}
+
+				for (int i=0; i<5;++i)
+				{
+					//Send diagnostic or add to queue
+					diagnostic_msgs::KeyValue pair;
+					std::ostringstream out;
+					out<<values[i];
+					pair.key = keys[i];
+					pair.value = out.str();
+					diag.values.push_back(pair);
+				}
+				diagnosticArray.status.push_back(diag);
 			}
-			diagnostic.publish(diag);
+			else
+			{
+				ROS_WARN("Bad ID number deduction.");
+			}
+		}
+		else
+		{
+			ROS_ERROR("Checksum failed: got: %d, calc:%d", chk, result.checksum());
 		}
 	}
 
-	sendSingle();
+	ROS_INFO("Remaining in buffer: %d",buffer.in_avail());
+
+	//Empty queue whatever was received
+	this->sendSingle();
 	this->start_receive();
 }
 
 void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 {
+	ROS_WARN("Callback distance: %f", (ros::Time::now() - newmsg).toSec());
+	newmsg = ros::Time::now();
 	//Clear queue and report warning if not empty
 	if (!output.empty())
 	{
@@ -273,6 +337,7 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 	for (int i=0; i<thrusterId.size(); ++i)
 	{
 		float t = ((i<nthrust)?thrust->data[i]:0);
+		t = labust::math::coerce(t, min, max);
 		thrustSer<<t;
 	}
 
@@ -313,39 +378,78 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 		checksum.reset();
 		checksum.process_bytes(pay.str().c_str(), pay.str().size());
 		chk = checksum.checksum();
-	  dataSer<<chk;
+		dataSer<<chk;
 
-	  boost::mutex::scoped_lock l(queueMux);
+		boost::mutex::scoped_lock l(queueMux);
 		output.push(out.str());
 
-		std::cout<<"Sending message:";
+		/*std::cout<<"Sending message:";
 		for (int i=0; i<out.str().size(); ++i)
 		{
 			std::cout.width(2);
 			std::cout.fill('0');
 			std::cout<<std::hex<<std::fixed<<uint32_t(uint8_t(out.str()[i]));
 		}
-		std::cout<<std::endl;
+		std::cout<<std::endl;*/
 	}
 
 	//Start emptying queue
 	ROS_INFO("Sending: %d", output.size());
-	newmsg = ros::Time::now();
 	sendSingle();
+
+	//Simulator for diagnostic output
+	///\todo Remove this simulation code
+//	std::string keys[]={"voltage", "current", "rpm", "temp", "fault"};
+//	float values[]={10, 20, 30, 35, 40};
+//	diagnostic_msgs::DiagnosticStatus diag;
+//	diag.hardware_id="BMotor0";
+//	diag.name="BMotor0";
+//	diag.level = diagnostic_msgs::DiagnosticStatus::OK;
+//
+//	for (int i=0; i<5;++i)
+//	{
+//		//Send diagnostic or add to queue
+//		diagnostic_msgs::KeyValue pair;
+//		std::ostringstream out;
+//		out<<values[i];
+//		pair.key = keys[i];
+//		pair.value = out.str();
+//		diag.values.push_back(pair);
+//	}
+//
+//	diagnosticArray.status.push_back(diag);
+//	diag.hardware_id="BMotor2";
+//	diag.name="BMotor2";
+//	diag.message = "Overheating";
+//	diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
+//	diagnosticArray.status.push_back(diag);
+//	diagnosticArray.header.stamp = ros::Time::now();
+//	diagnostic.publish(diagnosticArray);
+
 }
 
 void BMotor::sendSingle()
 {
 	boost::mutex::scoped_lock l(queueMux);
-	if (output.empty()) return;
+	if (output.empty())
+	{
+		//Close loop and publish diagnostics
+		diagnosticArray.header.stamp = ros::Time::now();
+		diagnostic.publish(diagnosticArray);
+		diagnosticArray.status.clear();
+		return;
+	}
 
 	std::string front = output.front();
 	output.pop();
-	l.unlock();
 
-	boost::asio::write(port, boost::asio::buffer(front));
+	boost::asio::async_write(port, boost::asio::buffer(front),
+			boost::bind(&BMotor::onSent, this, _1, _2));
+}
 
-	ROS_INFO("Send time: %f", (ros::Time::now()-newmsg).toSec());
+void BMotor::onSent(const boost::system::error_code& e, std::size_t size)
+{
+	ROS_INFO("Message sent time:%f",(ros::Time::now()-newmsg).toSec());
 }
 
 int main(int argc, char* argv[])
