@@ -320,6 +320,10 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 	{
 		ROS_ERROR("Queue is not empty.");
 		boost::mutex::scoped_lock l(queueMux);
+		//Publish diagnostics that was already collected
+		diagnosticArray.header.stamp = ros::Time::now();
+		diagnostic.publish(diagnosticArray);
+		diagnosticArray.status.clear();
 		//Empty queue
 		while (!output.empty()) output.pop();
 	}
