@@ -1,6 +1,13 @@
 <launch>
-    <node pkg="videoray" type="bmotor_node" name="brushlees_motor" args="/dev/ttyUSB0">
+    <node pkg="videoray" type="bmotor_node" name="brushless_motor">
   	<remap from="pwm_in" to="pwm_out" />
+	<param name="PortName" value="/home/dnad/pts1" />
+	<param name="Baud" value="115200" />
+    	<rosparam command="load"
+        	file="$(find pladypos)/launch/buddy_thruster.yaml" />
+        <param name="max" value="0.3"/>
+        <param name="min" value="-0.3"/>
+
     </node>
     <node pkg="pladypos" name="buddy_node" type="buddy_node_v1">
       <param name="maxThrust" value="1"/>

@@ -59,7 +59,7 @@ BMotor::BMotor():
 										ringBuffer(header_len,0),
 										thrusterId(1,0),
 										networkId(0x81),
-										max(0.05),
+										max(0.15),
 										min(-max),
 										maxTemp(70)
 {
@@ -265,7 +265,7 @@ void BMotor::onData(const boost::system::error_code& e,
 			int lid = thrusterId.size() - output.size() - 1;
 			if ((lid >= 0) && (lid < thrusterId.size()))
 			{
-				out<<"BMotor"<<thrusterId[lid];
+				out<<"BMotor"<<int(thrusterId[lid]);
 				diag.hardware_id=out.str();
 				diag.name = out.str();
 				if (data.temp >= maxTemp)
@@ -383,14 +383,14 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 		boost::mutex::scoped_lock l(queueMux);
 		output.push(out.str());
 
-		/*std::cout<<"Sending message:";
+		std::cout<<"Sending message:";
 		for (int i=0; i<out.str().size(); ++i)
 		{
 			std::cout.width(2);
 			std::cout.fill('0');
 			std::cout<<std::hex<<std::fixed<<uint32_t(uint8_t(out.str()[i]));
 		}
-		std::cout<<std::endl;*/
+		std::cout<<std::endl;
 	}
 
 	//Start emptying queue
