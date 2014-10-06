@@ -118,6 +118,8 @@ namespace labust
 
 			///Thruster IDs
 			std::vector<uint8_t> thrusterId;
+			///Thruster direction
+			std::vector<int> thrusterDir;
 			///Network/Group id
 			uint8_t networkId;
 			///Maximum and mininum value

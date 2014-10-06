@@ -98,6 +98,24 @@ void BMotor::onInit()
 				thrusterId.push_back(uint8_t(static_cast<int>(data[i])));
 		}
 	}
+
+	name = "thrusterDir";
+	if (ph.hasParam(name))
+	{
+		ph.getParam(name, data);
+		if (data.getType() == XmlRpc::XmlRpcValue::TypeArray)
+		{
+			thrusterDir.clear();
+			for(size_t i=0; i<data.size(); ++i)
+				thrusterDir.push_back(static_cast<int>(data[i]));
+		}
+	}
+	else
+	{
+		thrusterDir.clear();
+		for(int i=0; i<thrusterId.size(); ++i) thrusterDir.push_back(1);
+	}
+
 	ph.param("max", max, max);
 	ph.param("min", min, min);
 
@@ -344,7 +362,7 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 	for (int i=0; i<thrusterId.size(); ++i)
 	{
 		float t = ((i<nthrust)?thrust->data[i]:0);
-		t = labust::math::coerce(t, min, max);
+		t = labust::math::coerce(thrusterDir[i]*t, min, max);
 		thrustSer<<t;
 	}
 
@@ -387,6 +405,7 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 
 	boost::mutex::scoped_lock l(queueMux);
 	output.push(out.str());
+	l.unlock();
 
 	std::cout<<"Sending message:";
 	for (int i=0; i<out.str().size(); ++i)
@@ -398,7 +417,7 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 	std::cout<<std::endl;
 
 	//Start emptying queue
-	ROS_INFO("Sending: %d", output.size());
+	ROS_INFO("Sending: %d for ID=%d", output.size(), nextId);
 	//Advance Id
 	lastId = nextId;
 	nextId = (++nextId)%thrusterId.size();
