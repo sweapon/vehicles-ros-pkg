@@ -67,16 +67,16 @@ BuddyNode_v1::BuddyNode_v1():
 	*/
 
 	posDir[0] = 1.0;
-        negDir[0] = 1.0;
+  negDir[0] = 1.0;
 
-        posDir[1] = 1.0;
-        negDir[1] = 1.0;
+  posDir[1] = 1.0;
+  negDir[1] = 1.0;
 
-        posDir[2] = 1.0;
-        negDir[2] = 1.0;
+  posDir[2] = 1.0;
+  negDir[2] = 1.0;
 
-        posDir[3] = 1.0;
-        negDir[3] = 1.0;
+  posDir[3] = 1.0;
+  negDir[3] = 1.0;
 
 	/*for (int i=0; i<4; ++i)
 	{
@@ -228,13 +228,16 @@ void BuddyNode_v1::onTau(const auv_msgs::BodyForceReq::ConstPtr tau)
 	  if (tauXYN(2) > 0 ) t.windup.yaw = 1; else t.windup.yaw = -1;
 	}
 
-	double posMapping = 1.67;
+	double posMapping = 1.6;
 	double negMapping = 1;
 	double tzmax((Ub*Ub)/(Un*Un)*maxCap / 2);
 	double tzmin(-tzmax);
 	double tauZ = labust::math::coerce(tau->wrench.force.z, 2*tzmin, 2*tzmax);
 	double tauM = labust::math::coerce(tau->wrench.torque.y, 2*tzmin + fabs(tauZ), 2*tzmax - fabs(tauZ));
 	double tau5 =  0.3*maxCap*labust::vehicles::AffineThruster::getRevsD((tauZ - tauM)/((Ub*Ub)/(Un*Un)),posMapping, negMapping);
+
+	posMapping = 2.3;
+	negMapping = 1.4;
 	double tau6 =  0.3*maxCap*labust::vehicles::AffineThruster::getRevsD((tauZ + tauM)/((Ub*Ub)/(Un*Un)),posMapping, negMapping);
 
 	t.wrench.force.z = tau5 + tau6;
@@ -245,6 +248,9 @@ void BuddyNode_v1::onTau(const auv_msgs::BodyForceReq::ConstPtr tau)
 	std_msgs::Float32MultiArray::Ptr pwm(new std_msgs::Float32MultiArray());
 	pwm->data.resize(4);
 	//Here we map the thrusts
+	posMapping = 1.6;
+	negMapping = 1;
+
 	for (int i=0; i<pwm->data.size();++i)
 	{
 		//Added
