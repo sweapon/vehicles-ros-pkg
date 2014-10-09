@@ -294,7 +294,7 @@ namespace labust
 			auv_msgs::BodyForceReq tau;
 			tau.wrench.force.z = data->axes[3];
 			tau.wrench.force.x = data->axes[1];
-			tau.wrench.torque.z = data->axes[2];
+			tau.wrench.torque.z = -data->axes[2];
 
 			setTAU(tau);
 			lastTau = tau;
@@ -335,13 +335,13 @@ int main(int argc, char* argv[]){
 		if(VR.flag){
 			VR.getState(state);
 			VR.flag = false;
-
-			ROS_ERROR("Orientation %f", state.orientation.yaw);
-			ROS_ERROR("depth %f", state.position.depth);
-
-			pubTau.publish(VR.lastTau);
-			pubMeas.publish(state);
 		}
+
+		ROS_ERROR("Orientation %f", state.orientation.yaw);
+		ROS_ERROR("depth %f", state.position.depth);
+
+		pubTau.publish(VR.lastTau);
+		pubMeas.publish(state);
 
 		rate.sleep();
 		ros::spinOnce();
