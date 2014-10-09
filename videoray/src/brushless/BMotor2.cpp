@@ -34,7 +34,7 @@
  *  Author : Dula Nad
  *  Created: 23.01.2013.
  *********************************************************************/
-#include <labust/vehicles/BMotor.hpp>
+#include <labust/vehicles/BMotor2.hpp>
 #include <labust/vehicles/CSRMap.hpp>
 #include <labust/preprocessor/clean_serializator.hpp>
 #include <boost/archive/binary_iarchive.hpp>
@@ -61,7 +61,9 @@ BMotor::BMotor():
 										networkId(0x81),
 										max(0.15),
 										min(-max),
-										maxTemp(70)
+										maxTemp(70),
+										nextId(0),
+										lastId(0)
 {
 	this->onInit();
 }
@@ -96,6 +98,24 @@ void BMotor::onInit()
 				thrusterId.push_back(uint8_t(static_cast<int>(data[i])));
 		}
 	}
+
+	name = "thrusterDir";
+	if (ph.hasParam(name))
+	{
+		ph.getParam(name, data);
+		if (data.getType() == XmlRpc::XmlRpcValue::TypeArray)
+		{
+			thrusterDir.clear();
+			for(size_t i=0; i<data.size(); ++i)
+				thrusterDir.push_back(static_cast<int>(data[i]));
+		}
+	}
+	else
+	{
+		thrusterDir.clear();
+		for(int i=0; i<thrusterId.size(); ++i) thrusterDir.push_back(1);
+	}
+
 	ph.param("max", max, max);
 	ph.param("min", min, min);
 
@@ -262,7 +282,7 @@ void BMotor::onData(const boost::system::error_code& e,
 			std::stringstream out;
 			//Number of thrusters - remaining in queue
 			// - single that was already sent
-			int lid = thrusterId.size() - output.size() - 1;
+			int lid = lastId;//thrusterId.size() - output.size() - 1;
 			if ((lid >= 0) && (lid < thrusterId.size()))
 			{
 				out<<"BMotor"<<int(thrusterId[lid]);
@@ -316,7 +336,7 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 	ROS_WARN("Callback distance: %f", (ros::Time::now() - newmsg).toSec());
 	newmsg = ros::Time::now();
 	//Clear queue and report warning if not empty
-	if (!output.empty())
+	/*if (!output.empty())
 	{
 		ROS_ERROR("Queue is not empty.");
 		boost::mutex::scoped_lock l(queueMux);
@@ -326,7 +346,7 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 		diagnosticArray.status.clear();
 		//Empty queue
 		while (!output.empty()) output.pop();
-	}
+	}*/
 
 	int nthrust = thrusterId.size();
 	if (thrust->data.size() < thrusterId.size())
@@ -335,70 +355,72 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 		ROS_WARN("Less thruster values than thrusters. Setting remaining to zero.");
 	}
 
+
 	std::ostringstream t;
 	boost::archive::binary_oarchive thrustSer(t, boost::archive::no_header);
 	//Serialize the outgoing thrust for available thrusters
 	for (int i=0; i<thrusterId.size(); ++i)
 	{
 		float t = ((i<nthrust)?thrust->data[i]:0);
-		t = labust::math::coerce(t, min, max);
+		t = labust::math::coerce(thrusterDir[i]*t, min, max);
 		thrustSer<<t;
 	}
 
-	//Queue up messages for each thruster
-	for (int i=0;i<thrusterId.size();++i)
+	//Process next thruster
+	std::ostringstream out;
+	boost::archive::binary_oarchive dataSer(out, boost::archive::no_header);
+	VRHeader header;
+	header.sync = syncout;
+	header.csraddr = Command::custom;
+	header.flags = Response::tstdresponse;
+	header.network_id = networkId;
+	//Size of thruster info + header and ID bytes
+	header.length = t.str().size() + 2;
+	//Add the header
+	dataSer<<header;
+	//Calculate checksum
+	boost::crc_32_type checksum;
+	checksum.process_bytes(out.str().c_str(), out.str().size());
+	//Add the checksum
+	uint32_t chk = checksum.checksum();
+	dataSer<<chk;
+
+	std::ostringstream pay;
+	boost::archive::binary_oarchive payload(pay, boost::archive::no_header);
+	//Add the payload command
+	uint8_t hdr(0xAA);
+	payload<<hdr;
+	//Add the node id
+	payload<<nextId;
+	//Add all thruster values
+	clean_string_serialize(payload, t.str());
+	//Add payload
+	clean_string_serialize(dataSer, pay.str());
+
+	//Calculate checksum
+	checksum.reset();
+	checksum.process_bytes(pay.str().c_str(), pay.str().size());
+	chk = checksum.checksum();
+	dataSer<<chk;
+
+	boost::mutex::scoped_lock l(queueMux);
+	output.push(out.str());
+	l.unlock();
+
+	std::cout<<"Sending message:";
+	for (int i=0; i<out.str().size(); ++i)
 	{
-		std::ostringstream out;
-		boost::archive::binary_oarchive dataSer(out, boost::archive::no_header);
-		VRHeader header;
-		header.sync = syncout;
-		header.csraddr = Command::custom;
-		header.flags = Response::tstdresponse;
-		header.network_id = networkId;
-		//Size of thruster info + header and ID bytes
-		header.length = t.str().size() + 2;
-		//Add the header
-		dataSer<<header;
-		//Calculate checksum
-		boost::crc_32_type checksum;
-		checksum.process_bytes(out.str().c_str(), out.str().size());
-		//Add the checksum
-		uint32_t chk = checksum.checksum();
-		dataSer<<chk;
-
-		std::ostringstream pay;
-		boost::archive::binary_oarchive payload(pay, boost::archive::no_header);
-		//Add the payload command
-		uint8_t hdr(0xAA);
-		payload<<hdr;
-		//Add the node id
-		payload<<thrusterId[i];
-		//Add all thruster values
-		clean_string_serialize(payload, t.str());
-		//Add payload
-		clean_string_serialize(dataSer, pay.str());
-
-		//Calculate checksum
-		checksum.reset();
-		checksum.process_bytes(pay.str().c_str(), pay.str().size());
-		chk = checksum.checksum();
-		dataSer<<chk;
-
-		boost::mutex::scoped_lock l(queueMux);
-		output.push(out.str());
-
-		std::cout<<"Sending message:";
-		for (int i=0; i<out.str().size(); ++i)
-		{
-			std::cout.width(2);
-			std::cout.fill('0');
-			std::cout<<std::hex<<std::fixed<<uint32_t(uint8_t(out.str()[i]));
-		}
-		std::cout<<std::endl;
+		std::cout.width(2);
+		std::cout.fill('0');
+		std::cout<<std::hex<<std::fixed<<uint32_t(uint8_t(out.str()[i]));
 	}
+	std::cout<<std::endl;
 
 	//Start emptying queue
-	ROS_INFO("Sending: %d", output.size());
+	ROS_INFO("Sending: %d for ID=%d", output.size(), nextId);
+	//Advance Id
+	lastId = nextId;
+	nextId = (++nextId)%thrusterId.size();
 	sendSingle();
 
 	//Simulator for diagnostic output
