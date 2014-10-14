@@ -60,7 +60,7 @@ public:
 		ros::NodeHandle nh;
 
 		subRhodamineData = nh.subscribe<std_msgs::Float32>("rhodamine_adc", 1, &UROSLogger::onRhodamineData, this);
-		subTemperatureData = nh.subscribe<std_msgs::Float32>("temp", 1, &UROSLogger::onTemperatureData, this);
+		//subTemperatureData = nh.subscribe<std_msgs::Float32>("temp", 1, &UROSLogger::onTemperatureData, this);
 		subPositionData = nh.subscribe<auv_msgs::NavSts>("rhodamine_latlon",1, &UROSLogger::onPositionData, this);
 
 	}
@@ -91,10 +91,10 @@ public:
 			ss << boost::posix_time::second_clock::universal_time();
 
 			/* Write header data to log */
-			log_file << "%" << "Pladypos, data from LAUV-LUPIS,Rhodamine, ~0.5 Hz" << std::endl;
-			log_file << ss.str() << std::endl;
+			log_file << "%" << "Pladypos, data from LAUV-LUPIS-1, Rhodamine, ~0.5 Hz" << std::endl;
+			log_file << "%" << ss.str() << std::endl;
 			log_file << "%-1" << std::endl;
-			log_file << "%Time (unix time), Latitude (decimal degree), Longitude(decimal degree), Depth (m), Rhodamine (ppb), Crude, Refined, temperature" << std::endl;
+			log_file << "%Time (unix time), Latitude (decimal degree), Longitude(decimal degree), Depth (m), Rhodamine (ppb), Crude, Refined, Temperature" << std::endl;
 
 			// Test line
 //			std::time_t t = std::time(0);
