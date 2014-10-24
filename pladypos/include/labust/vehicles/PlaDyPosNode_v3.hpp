@@ -34,7 +34,6 @@
 #ifndef PLADYPOSNODEV3_HPP_
 #define PLADYPOSNODEV3_HPP_
 #include <labust/vehicles/ScaleAllocation.hpp>
-#include <pladypos/ThrusterMappingConfig.h>
 
 #include <auv_msgs/BodyForceReq.h>
 #include <std_msgs/Float32.h>
