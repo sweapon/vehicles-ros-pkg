@@ -31,8 +31,8 @@
 *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
-#ifndef PLADYPOSNODEV3_HPP_
-#define PLADYPOSNODEV3_HPP_
+#ifndef VRTESTV1_HPP_
+#define VRTESTV1_HPP_
 #include <labust/vehicles/ScaleAllocation.hpp>
 
 #include <auv_msgs/BodyForceReq.h>
@@ -52,7 +52,7 @@ namespace labust
 		 * \todo When the stable version is reached spin off a general templated or
 		 * dynamically loaded vehicle driver
 		 */
-		class PlaDyPosNode_v3
+		class VRTest_v1
 		{
 			enum {P0=0,P1,P2,P3};
 			const float Un;
@@ -60,12 +60,12 @@ namespace labust
 			/**
 			 * Main constructor.
 			 */
-			PlaDyPosNode_v3();
+			VRTest_v1();
 
 			/**
 			 * General destructor.
 			 */
-			~PlaDyPosNode_v3();
+			~VRTest_v1();
 
 			void configure(ros::NodeHandle& nh, ros::NodeHandle& ph);
 
@@ -146,7 +146,7 @@ namespace labust
 			/**
 			 * Allocation matrix and maximum force, torque.
 			 */
-			Eigen::Matrix<float, 3,4> B;
+			Eigen::Matrix<float, 3,3> B;
 			/**
 			 * Inverse matrix.
 			 */
