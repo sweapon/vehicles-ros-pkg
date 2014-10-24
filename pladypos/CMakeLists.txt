@@ -9,7 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp
     sensor_msgs
     dynamic_reconfigure 
-    snippets)
+    snippets
+    cmake_modules)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
@@ -89,6 +90,7 @@ add_executable(pro4_node_v1 src/VRTest_v1.cpp)
 add_dependencies(pladypos_node ${PROJECT_NAME}_gencpp)
 if (DEFINED catkin_EXPORTED_TARGETS)
  add_dependencies(pladypos_node_v3 ${catkin_EXPORTED_TARGETS})
+ add_dependencies(buddy_node_v1 ${catkin_EXPORTED_TARGETS})
  add_dependencies(pladypos_node_v2 ${catkin_EXPORTED_TARGETS})
  add_dependencies(pladypos_node ${catkin_EXPORTED_TARGETS})
  add_dependencies(pro4_node_v1 ${catkin_EXPORTED_TARGETS})
