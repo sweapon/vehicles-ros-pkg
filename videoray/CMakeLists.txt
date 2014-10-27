@@ -13,8 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system serialization)
-find_package(Eigen REQUIRED)
-include_directories(${Eigen_INCLUDE_DIRS})
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and scripts declared therein get installed
@@ -80,6 +78,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_executable(videoray_node src/videoray_node.cpp)
 add_executable(bmotor_node src/brushless/BMotor.cpp)
 add_executable(bmotor_node2 src/brushless/BMotor2.cpp)
+add_executable(pro4_node src/brushless/Pro4Driver.cpp)
 
 ## Add dependencies to the executable
 #add_dependencies(pladypos_node ${PROJECT_NAME}_gencpp)
@@ -94,6 +93,7 @@ endif()
 target_link_libraries(videoray_node ${catkin_LIBRARIES})
 target_link_libraries(bmotor_node ${catkin_LIBRARIES} ${Boost_SERIALIZATION_LIBRARY})
 target_link_libraries(bmotor_node2 ${catkin_LIBRARIES} ${Boost_SERIALIZATION_LIBRARY})
+target_link_libraries(pro4_node ${catkin_LIBRARIES} ${Boost_SERIALIZATION_LIBRARY})
 
 #############
 ## Install ##

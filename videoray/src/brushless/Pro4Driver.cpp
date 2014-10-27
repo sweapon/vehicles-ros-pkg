@@ -34,14 +34,17 @@
  *  Author : Dula Nad
  *  Created: 23.01.2013.
  *********************************************************************/
-#include <labust/vehicles/BMotor2.hpp>
+#include <labust/vehicles/Pro4Driver.hpp>
 #include <labust/vehicles/CSRMap.hpp>
 #include <labust/preprocessor/clean_serializator.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <labust/tools/conversions.hpp>
+#include <labust/tools/StringUtilities.hpp>
 #include <labust/math/NumberManipulation.hpp>
 #include <diagnostic_msgs/DiagnosticStatus.h>
+#include <sensor_msgs/Imu.h>
+#include <sensor_msgs/FluidPressure.h>
 
 #include <boost/bind.hpp>
 #include <boost/crc.hpp>
@@ -54,34 +57,34 @@ PP_LABUST_CLEAN_ARRAY_OSERIALIZATOR_IMPL(boost::archive::binary_oarchive)
 
 using namespace labust::vehicles;
 
-BMotor::BMotor():
-										port(io),
-										ringBuffer(header_len,0),
-										thrusterId(1,0),
-										networkId(0x81),
-										max(0.15),
-										min(-max),
-										maxTemp(70),
-										nextId(0),
-										lastId(0)
+Pro4Driver::Pro4Driver():
+		port(io),
+		ringBuffer(header_len,0),
+		thrusterId(1,0),
+		networkId(0x01),
+		max(0.15),
+		min(-max),
+		maxTemp(70),
+		nextId(0),
+		lastId(0)
 {
 	this->onInit();
 }
 
-BMotor::~BMotor()
+Pro4Driver::~Pro4Driver()
 {
 	io.stop();
 	runner.join();
 }
 
-void BMotor::onInit()
+void Pro4Driver::onInit()
 {
 	ros::NodeHandle nh, ph("~");
 	ros::Rate r(1);
 	bool setupOk(false);
 	while (!(setupOk = this->setup_port()) && ros::ok())
 	{
-		ROS_ERROR("BMotor::Failed to open port.");
+		ROS_ERROR("Pro4Driver::Failed to open port.");
 		r.sleep();
 	}
 
@@ -121,8 +124,10 @@ void BMotor::onInit()
 
 	//Setup publisher
 	diagnostic = nh.advertise<diagnostic_msgs::DiagnosticArray>("diagnostics",1);
+	imu = nh.advertise<sensor_msgs::Imu>("imu",1);
+	pressure = nh.advertise<sensor_msgs::FluidPressure>("pressure",1);
 	//Setup subscribers
-	thrustIn = nh.subscribe<std_msgs::Float32MultiArray>("pwm_in",1,&BMotor::onThrustIn,this);
+	thrustIn = nh.subscribe<std_msgs::Float32MultiArray>("pwm_in",1,&Pro4Driver::onThrustIn,this);
 
 	if (setupOk)
 	{
@@ -132,14 +137,14 @@ void BMotor::onInit()
 	}
 }
 
-void BMotor::start_receive()
+void Pro4Driver::start_receive()
 {
 	using namespace boost::asio;
 	async_read(port, buffer.prepare(header_len),
-			boost::bind(&BMotor::onHeader, this, _1,_2));
+			boost::bind(&Pro4Driver::onHeader, this, _1,_2));
 }
 
-bool BMotor::setup_port()
+bool Pro4Driver::setup_port()
 {
 	ros::NodeHandle ph("~");
 	std::string portName("/dev/ttyUSB0");
@@ -152,12 +157,12 @@ bool BMotor::setup_port()
 	port.open(portName);
 	port.set_option(serial_port::baud_rate(baud));
 	port.set_option(serial_port::flow_control(
-			serial_port::flow_control::hardware));
+			serial_port::flow_control::none));
 
 	return port.is_open();
 }
 
-void BMotor::onHeader(const boost::system::error_code& e,
+void Pro4Driver::onHeader(const boost::system::error_code& e,
 		std::size_t size)
 {
 	ROS_INFO("Send time header: %f", (ros::Time::now()-newmsg).toSec());
@@ -172,11 +177,11 @@ void BMotor::onHeader(const boost::system::error_code& e,
 			//Put the new byte on the end of the ring buffer
 			ringBuffer.push_back(buffer.sbumpc());
 			//Test framing
-			if (ringBuffer[0] == workaroundSync)
-			{
-				ROS_WARN("Applying framing workaround.");
-				ringBuffer[0] = 0xF0;
-			}
+			//if (ringBuffer[0] == workaroundSync)
+			//{
+			//	ROS_WARN("Applying framing workaround.");
+			//	ringBuffer[0] = 0xF0;
+			//}
 		}
 		else
 		{
@@ -185,11 +190,11 @@ void BMotor::onHeader(const boost::system::error_code& e,
 			ROS_WARN("FIRST BUFFER ELEMENT:%d", peek);
 			buffer.sgetn(reinterpret_cast<char*>(ringBuffer.data()),size);
 			//Correct the framing error
-			if (peek == workaroundSync)
-			{
-				ROS_WARN("Applying framing workaround.");
-				ringBuffer[0] = 0xF0;
-			}
+			//if (peek == workaroundSync)
+			//{
+			//	ROS_WARN("Applying framing workaround.");
+			//	ringBuffer[0] = 0xF0;
+			//}
 		}
 
 		uint16_t* sync = reinterpret_cast<uint16_t*>(ringBuffer.data());
@@ -198,19 +203,23 @@ void BMotor::onHeader(const boost::system::error_code& e,
 		{
 			ROS_INFO("Sync found.");
 			//Check header checksum
-			boost::crc_32_type result;
-			result.process_block(&ringBuffer[header_byte], &ringBuffer[checksum_byte]);
-			uint32_t* chk = reinterpret_cast<uint32_t*>(&ringBuffer[checksum_byte]);
-			if (result.checksum() == (*chk))
+			//boost::crc_32_type result;
+			//result.process_block(&ringBuffer[header_byte], &ringBuffer[checksum_byte]);
+			//uint32_t* chk = reinterpret_cast<uint32_t*>(&ringBuffer[checksum_byte]);
+			const uint8_t* pt = reinterpret_cast<const uint8_t*>(&ringBuffer[header_byte]);
+			uint8_t chkin = labust::tools::getChecksum(pt, header_len-1);
+			//if (result.checksum() == (*chk))
+			if (chkin == ringBuffer[checksum_byte])
 			{
 				ROS_INFO("Checksum ok. Payload size: %d", ringBuffer[size_byte]);
 				boost::asio::async_read(port, buffer.prepare(ringBuffer[size_byte]+chk_len),
-						boost::bind(&BMotor::onData,this,_1,_2));
+						boost::bind(&Pro4Driver::onData,this,_1,_2));
 				return;
 			}
 			else
 			{
-				ROS_ERROR("Checksum failed: got: %d, calc:%d", *chk, result.checksum());
+				//ROS_ERROR("Checksum failed: got: %d, calc:%d", *chk, result.checksum());
+				ROS_ERROR("Checksum failed: got: %d, calc:%d", ringBuffer[checksum_byte], chkin);
 			}
 		}
 		else
@@ -228,18 +237,18 @@ void BMotor::onHeader(const boost::system::error_code& e,
 
 			boost::asio::async_read(port,
 					buffer.prepare(1),
-					boost::bind(&BMotor::onHeader,this,_1,_2));
+					boost::bind(&Pro4Driver::onHeader,this,_1,_2));
 			return;
 		}
 	}
 	else
 	{
-		ROS_ERROR("BMotor: %s",e.message().c_str());
+		ROS_ERROR("Pro4Driver: %s",e.message().c_str());
 	}
 	this->start_receive();
 }
 
-void BMotor::onData(const boost::system::error_code& e,
+void Pro4Driver::onData(const boost::system::error_code& e,
 		std::size_t size)
 {
 
@@ -250,77 +259,81 @@ void BMotor::onData(const boost::system::error_code& e,
 		buffer.commit(size);
 		boost::archive::binary_iarchive dataSer(buffer, boost::archive::no_header);
 		std::istream is(&buffer);
-		std::string payload(size-4,'\0');
-		is.read(&payload[0],size-4);
-		uint32_t chk;
+		std::string payload(size-chk_len,'\0');
+		is.read(&payload[0],size-chk_len);
+		uint8_t chk;
 		dataSer >> chk;
 
-		boost::crc_32_type result;
-		result.process_bytes(payload.data(), payload.size());
-
-		if (result.checksum() == chk)
+		//boost::crc_32_type result;
+		//result.process_bytes(payload.data(), payload.size());
+		const uint8_t* pt = reinterpret_cast<const uint8_t*>(payload.c_str());
+		uint8_t chkin = labust::tools::getChecksum(pt, payload.size());
+		//if (result.checksum() == chk)
+		if (chkin == chk)
 		{
 			ROS_INFO("Payload checksum ok.");
 
 			std::istringstream is;
 			is.rdbuf()->pubsetbuf(&payload[0],payload.size());
 			boost::archive::binary_iarchive paySer(is, boost::archive::no_header);
-			TStdResponse data;
+			VRStdResponse data;
 			paySer >> data;
 
 			//Check cheksum
 			ROS_INFO("New update:");
-			ROS_INFO("\tVoltage=%f", data.bus_v);
-			ROS_INFO("\tCurrent=%f", data.bus_i);
-			ROS_INFO("\tRPM=%f", data.rpm);
-			ROS_INFO("\tTemperature=%f", data.temp);
-			ROS_INFO("\tFault=%d", data.fault);
+			ROS_INFO("\tHeading=%d", data.heading);
+			ROS_INFO("\tPitch=%d", data.pitch);
+			ROS_INFO("\tRoll=%d", data.roll);
+			ROS_INFO("\tPressure=%d", data.pressure);
 
-			std::string keys[]={"voltage", "current", "rpm", "temp", "fault"};
-			float values[]={data.bus_v, data.bus_i, data.rpm, data.temp, float(data.fault)};
-			diagnostic_msgs::DiagnosticStatus diag;
-			std::stringstream out;
-			//Number of thrusters - remaining in queue
-			// - single that was already sent
-			int lid = lastId;//thrusterId.size() - output.size() - 1;
-			if ((lid >= 0) && (lid < thrusterId.size()))
-			{
-				out<<"BMotor"<<int(thrusterId[lid]);
-				diag.hardware_id=out.str();
-				diag.name = out.str();
-				if (data.temp >= maxTemp)
-				{
-					diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
-					diag.message = "I'm overheating, bitch!";
-				}
-				diag.message = ((data.rpm < 20)?"Doing static impressions":"Spinnin 'n shit");
+			this->processStdReply(data);
 
-				if ((fabs(data.rpm) < 20) && (fabs(data.bus_i) > 0.5))
-				{
-					diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
-					diag.message = "I'm stuck, punk!";
-				}
-
-				for (int i=0; i<5;++i)
-				{
-					//Send diagnostic or add to queue
-					diagnostic_msgs::KeyValue pair;
-					std::ostringstream out;
-					out<<values[i];
-					pair.key = keys[i];
-					pair.value = out.str();
-					diag.values.push_back(pair);
-				}
-				diagnosticArray.status.push_back(diag);
-			}
-			else
-			{
-				ROS_WARN("Bad ID number deduction.");
-			}
+//			std::string keys[]={"voltage", "current", "rpm", "temp", "fault"};
+//			float values[]={data.bus_v, data.bus_i, data.rpm, data.temp, float(data.fault)};
+//			diagnostic_msgs::DiagnosticStatus diag;
+//			std::stringstream out;
+//			//Number of thrusters - remaining in queue
+//			// - single that was already sent
+//			int lid = lastId;//thrusterId.size() - output.size() - 1;
+//			if ((lid >= 0) && (lid < thrusterId.size()))
+//			{
+//				out<<"Pro4Driver"<<int(thrusterId[lid]);
+//				diag.hardware_id=out.str();
+//				diag.name = out.str();
+//				if (data.temp >= maxTemp)
+//				{
+//					diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
+//					diag.message = "I'm overheating, bitch!";
+//				}
+//				diag.message = ((data.rpm < 20)?"Doing static impressions":"Spinnin 'n shit");
+//
+//				if ((fabs(data.rpm) < 20) && (fabs(data.bus_i) > 0.5))
+//				{
+//					diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
+//					diag.message = "I'm stuck, punk!";
+//				}
+//
+//				for (int i=0; i<5;++i)
+//				{
+//					//Send diagnostic or add to queue
+//					diagnostic_msgs::KeyValue pair;
+//					std::ostringstream out;
+//					out<<values[i];
+//					pair.key = keys[i];
+//					pair.value = out.str();
+//					diag.values.push_back(pair);
+//				}
+//				diagnosticArray.status.push_back(diag);
+//			}
+//			else
+//			{
+//				ROS_WARN("Bad ID number deduction.");
+//			}
 		}
 		else
 		{
-			ROS_ERROR("Checksum failed: got: %d, calc:%d", chk, result.checksum());
+			//ROS_ERROR("Checksum failed: got: %d, calc:%d", chk, result.checksum());
+			ROS_ERROR("Checksum failed: got: %d, calc:%d", chk, chkin);
 		}
 	}
 
@@ -331,76 +344,74 @@ void BMotor::onData(const boost::system::error_code& e,
 	this->start_receive();
 }
 
-void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
+void Pro4Driver::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 {
 	ROS_WARN("Callback distance: %f", (ros::Time::now() - newmsg).toSec());
 	newmsg = ros::Time::now();
-	//Clear queue and report warning if not empty
-	/*if (!output.empty())
-	{
-		ROS_ERROR("Queue is not empty.");
-		boost::mutex::scoped_lock l(queueMux);
-		//Publish diagnostics that was already collected
-		diagnosticArray.header.stamp = ros::Time::now();
-		diagnostic.publish(diagnosticArray);
-		diagnosticArray.status.clear();
-		//Empty queue
-		while (!output.empty()) output.pop();
-	}*/
-
-	int nthrust = thrusterId.size();
-	if (thrust->data.size() < thrusterId.size())
-	{
-		nthrust = thrust->data.size();
-		ROS_WARN("Less thruster values than thrusters. Setting remaining to zero.");
-	}
-
 
 	std::ostringstream t;
 	boost::archive::binary_oarchive thrustSer(t, boost::archive::no_header);
 	//Serialize the outgoing thrust for available thrusters
-	for (int i=0; i<thrusterId.size(); ++i)
+	for (int i=0; i<nthrust; ++i)
 	{
-		float t = ((i<nthrust)?thrust->data[i]:0);
-		t = labust::math::coerce(thrusterDir[i]*t, min, max);
+		short int t(0);
+		if (thrust->data.size() > i)
+		{
+			t = static_cast<short int>(thustmul*
+					labust::math::coerce(thrust->data[i], min, max));
+		}
 		thrustSer<<t;
 	}
 
-	//Process next thruster
+	uint16_t light = 0;
+	thrustSer<<light;
+
+	//Add light and camera control here here
+	//thustSer<<static_cast<uint8_t>(light);
+	//thustSer<<static_cast<uint8_t>(tilt);
+	//thustSer<<static_cast<uint8_t>(focus);
+	//thustSer<<static_cast<uint8_t>(tilt control);
+	//thustSer<<static_cast<uint8_t>(focus control);
+
 	std::ostringstream out;
 	boost::archive::binary_oarchive dataSer(out, boost::archive::no_header);
 	VRHeader header;
 	header.sync = syncout;
-	header.csraddr = Command::custom;
-	header.flags = Response::tstdresponse;
+	header.csraddr = Command::csrstart;
+	header.flags = Response::vrstdresponse;
 	header.network_id = networkId;
 	//Size of thruster info + header and ID bytes
-	header.length = t.str().size() + 2;
+	header.length = t.str().size();
 	//Add the header
 	dataSer<<header;
 	//Calculate checksum
-	boost::crc_32_type checksum;
-	checksum.process_bytes(out.str().c_str(), out.str().size());
+	const uint8_t* pt = reinterpret_cast<const unsigned char*>(out.str().c_str());
+	uint8_t chk = labust::tools::getChecksum(pt, out.str().size());
+	//boost::crc_32_type checksum;
+	//checksum.process_bytes(out.str().c_str(), out.str().size());
 	//Add the checksum
-	uint32_t chk = checksum.checksum();
+	//uint32_t chk = checksum.checksum();
 	dataSer<<chk;
 
 	std::ostringstream pay;
 	boost::archive::binary_oarchive payload(pay, boost::archive::no_header);
 	//Add the payload command
-	uint8_t hdr(0xAA);
-	payload<<hdr;
+	//uint8_t hdr(0xAA);
+	//payload<<hdr;
 	//Add the node id
-	payload<<nextId;
+	//payload<<nextId;
 	//Add all thruster values
-	clean_string_serialize(payload, t.str());
+	//clean_string_serialize(payload, t.str());
 	//Add payload
-	clean_string_serialize(dataSer, pay.str());
+	//clean_string_serialize(dataSer, pay.str());
+	clean_string_serialize(dataSer, t.str());
 
 	//Calculate checksum
-	checksum.reset();
-	checksum.process_bytes(pay.str().c_str(), pay.str().size());
-	chk = checksum.checksum();
+	pt = reinterpret_cast<const unsigned char*>(out.str().c_str());
+	chk = labust::tools::getChecksum(pt, out.str().size());
+	//checksum.reset();
+	//checksum.process_bytes(pay.str().c_str(), pay.str().size());
+	//chk = checksum.checksum();
 	dataSer<<chk;
 
 	boost::mutex::scoped_lock l(queueMux);
@@ -428,8 +439,8 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 //	std::string keys[]={"voltage", "current", "rpm", "temp", "fault"};
 //	float values[]={10, 20, 30, 35, 40};
 //	diagnostic_msgs::DiagnosticStatus diag;
-//	diag.hardware_id="BMotor0";
-//	diag.name="BMotor0";
+//	diag.hardware_id="Pro4Driver0";
+//	diag.name="Pro4Driver0";
 //	diag.level = diagnostic_msgs::DiagnosticStatus::OK;
 //
 //	for (int i=0; i<5;++i)
@@ -444,8 +455,8 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 //	}
 //
 //	diagnosticArray.status.push_back(diag);
-//	diag.hardware_id="BMotor2";
-//	diag.name="BMotor2";
+//	diag.hardware_id="Pro4Driver2";
+//	diag.name="Pro4Driver2";
 //	diag.message = "Overheating";
 //	diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
 //	diagnosticArray.status.push_back(diag);
@@ -454,7 +465,7 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 
 }
 
-void BMotor::sendSingle()
+void Pro4Driver::sendSingle()
 {
 	boost::mutex::scoped_lock l(queueMux);
 	if (output.empty())
@@ -470,18 +481,36 @@ void BMotor::sendSingle()
 	output.pop();
 
 	boost::asio::async_write(port, boost::asio::buffer(front),
-			boost::bind(&BMotor::onSent, this, _1, _2));
+			boost::bind(&Pro4Driver::onSent, this, _1, _2));
 }
 
-void BMotor::onSent(const boost::system::error_code& e, std::size_t size)
+void Pro4Driver::onSent(const boost::system::error_code& e, std::size_t size)
 {
 	ROS_INFO("Message sent time:%f",(ros::Time::now()-newmsg).toSec());
 }
 
+void Pro4Driver::processStdReply(const VRStdResponse& rep)
+{
+	sensor_msgs::Imu::Ptr imuout(new sensor_msgs::Imu());
+	labust::tools::quaternionFromEulerZYX(M_PI*rep.roll/1800.,
+			M_PI*rep.pitch/1800.,
+			M_PI*rep.heading/1800.,
+			imuout->orientation);
+	imuout->header.frame_id = "base_link";
+	imuout->header.stamp = ros::Time::now();
+	imu.publish(imuout);
+
+	sensor_msgs::FluidPressure::Ptr pressureout(new sensor_msgs::FluidPressure());
+	pressureout->fluid_pressure = rep.pressure;
+	pressureout->header.frame_id = "base_link";
+	pressureout->header.stamp = ros::Time::now();
+	pressure.publish(pressureout);
+}
+
 int main(int argc, char* argv[])
 {
-	ros::init(argc,argv,"bmotor_node");
-	BMotor node;
+	ros::init(argc,argv,"pro4_node");
+	Pro4Driver node;
 	ros::spin();
 
 	return 0;
