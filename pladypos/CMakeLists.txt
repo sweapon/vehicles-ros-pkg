@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
+find_package(xacro)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and scripts declared therein get installed
@@ -106,6 +107,20 @@ target_link_libraries(pladypos_node_v3 ${catkin_LIBRARIES})
 target_link_libraries(uros_logger_pladypos_node ${catkin_LIBRARIES})
 target_link_libraries(buddy_node_v1 ${catkin_LIBRARIES})
 target_link_libraries(pro4_node_v1 ${catkin_LIBRARIES}) 
+
+## Convert xacro models to urdf
+if (xacro_FOUND)
+ set(model_files "")
+ file(GLOB model_xacro ${CMAKE_CURRENT_SOURCE_DIR}/data/models/xacro/*.urdf.xacro)
+ foreach(it ${model_xacro})
+   get_filename_component(basepath ${it} PATH)
+   get_filename_component(basename ${it} NAME_WE) 
+   set(expanded_file "${basepath}/../urdf/${basename}.urdf")  
+   xacro_add_xacro_file(${it} ${expanded_file})
+   set(model_files ${model_files} ${expanded_file})
+ endforeach(it)
+ add_custom_target(${PROJECT_NAME}_models ALL DEPENDS ${model_files})
+endif()
 
 #############
 ## Install ##
