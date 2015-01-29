@@ -121,6 +121,8 @@ include_directories(
 if (xacro_FOUND)
  set(model_files "")
  file(GLOB model_xacro ${CMAKE_CURRENT_SOURCE_DIR}/data/models/xacro/*.urdf.xacro)
+ set(expanded_directory ${CMAKE_CURRENT_SOURCE_DIR}/data/models/urdf/)
+ execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${expanded_directory})
  foreach(it ${model_xacro})
    get_filename_component(basepath ${it} PATH)
    get_filename_component(basename ${it} NAME_WE) 
