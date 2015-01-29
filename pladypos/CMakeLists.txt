@@ -9,12 +9,14 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp
     sensor_msgs
     dynamic_reconfigure 
-    snippets)
+    snippets
+    cmake_modules)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
+find_package(xacro)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and scripts declared therein get installed
@@ -81,15 +83,19 @@ add_executable(pladypos_node_v2 src/PlaDyPosNode_v2.cpp)
 
 add_executable(uros_logger_pladypos_node src/uros_logger.cpp)  
 add_executable(pladypos_node_v3 src/PlaDyPosNode_v3.cpp)
-add_executable(buddy_node_v1 src/BuddyTest_v1.cpp)    
+add_executable(buddy_node_v1 src/BuddyTest_v1.cpp)
+add_executable(pro4_node_v1 src/VRTest_v1.cpp)     
 #add_executable(nav_node src/nav_node.cpp)
 
 ## Add dependencies to the executable
 add_dependencies(pladypos_node ${PROJECT_NAME}_gencpp)
 if (DEFINED catkin_EXPORTED_TARGETS)
  add_dependencies(pladypos_node_v3 ${catkin_EXPORTED_TARGETS})
+ add_dependencies(buddy_node_v1 ${catkin_EXPORTED_TARGETS})
  add_dependencies(pladypos_node_v2 ${catkin_EXPORTED_TARGETS})
  add_dependencies(pladypos_node ${catkin_EXPORTED_TARGETS})
+ add_dependencies(pro4_node_v1 ${catkin_EXPORTED_TARGETS})
+ add_dependencies(buddy_node_v1 ${catkin_EXPORTED_TARGETS})
  add_dependencies(uros_logger_pladypos_node ${catkin_EXPORTED_TARGETS})
 endif()
 
@@ -99,7 +105,22 @@ target_link_libraries(pladypos_node_v2 ${catkin_LIBRARIES})
 target_link_libraries(pladypos_node_v3 ${catkin_LIBRARIES})
 
 target_link_libraries(uros_logger_pladypos_node ${catkin_LIBRARIES})
-target_link_libraries(buddy_node_v1 ${catkin_LIBRARIES}) 
+target_link_libraries(buddy_node_v1 ${catkin_LIBRARIES})
+target_link_libraries(pro4_node_v1 ${catkin_LIBRARIES}) 
+
+## Convert xacro models to urdf
+if (xacro_FOUND)
+ set(model_files "")
+ file(GLOB model_xacro ${CMAKE_CURRENT_SOURCE_DIR}/data/models/xacro/*.urdf.xacro)
+ foreach(it ${model_xacro})
+   get_filename_component(basepath ${it} PATH)
+   get_filename_component(basename ${it} NAME_WE) 
+   set(expanded_file "${basepath}/../urdf/${basename}.urdf")  
+   xacro_add_xacro_file(${it} ${expanded_file})
+   set(model_files ${model_files} ${expanded_file})
+ endforeach(it)
+ add_custom_target(${PROJECT_NAME}_models ALL DEPENDS ${model_files})
+endif()
 
 #############
 ## Install ##

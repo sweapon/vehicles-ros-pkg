@@ -109,7 +109,7 @@ add_executable(ethernet_relay_node src/ethernet_relay_driver.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(buddy_node buddy_generate_messages_cpp)
+add_dependencies(ethernet_relay_node misc_msgs_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(buddy_node

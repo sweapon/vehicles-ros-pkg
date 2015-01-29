@@ -75,17 +75,28 @@ PP_LABUST_DEFINE_BOOST_SERIALIZED_STRUCT_CLEAN(
 		(float, temp)
 		(uint8_t, fault))
 
+PP_LABUST_DEFINE_BOOST_SERIALIZED_STRUCT_CLEAN(
+		(labust)(vehicles),
+		VRStdResponse,
+		(uint8_t, id)
+		(int16_t, heading)
+		(int16_t, pitch)
+		(int16_t, roll)
+		(int16_t, pressure))
+
 namespace labust
 {
 	namespace vehicles
 	{
 		struct Response
 		{
-			enum{tstdresponse=0x02};
+			enum{tstdresponse=0x02,
+				vrstdresponse=0x03};
 		};
 
 		struct Command
 		{
+			enum{csrstart = 0x00};
 			enum{custom = 0xF0};
 			enum{setAll = 0xAA};
 		};

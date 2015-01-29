@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="buddy">
+ 	<xacro:property name="mesh_path" value="package://buddy/data/mesh/dae/buddy.dae" />
+ 	<xacro:include filename="$(find buddy)/data/models/xacro/buddy_base.xacro" />
+</robot>
