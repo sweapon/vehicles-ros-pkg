@@ -49,7 +49,7 @@ class UROSMissionChange{
 
 public:
 
-	UROSMissionChange():rhodamineData(-1.0), treshold(10.0){
+	UROSMissionChange():rhodamineData(-1.0), treshold(10.0), n_avg(10), avg(0){
 
 		ros::NodeHandle nh;
 
@@ -58,6 +58,12 @@ public:
 
 		pubChangeMission = nh.advertise<auv_msgs::NavSts>("change_mission", 1);
 
+
+		/*** Init Simple moving average filter ***/
+
+		for(int i = 0; i < n_avg-1; i++){
+			samples_avg.push(0);
+		}
 	}
 
 	~UROSMissionChange(){
@@ -67,7 +73,13 @@ public:
 	void onRhodamineData(const std_msgs::Float32::ConstPtr& data){
 		rhodamineData = data->data;
 
-		if(rhodamineData > treshold){
+		/*** Calculate Simple moving average ***/
+
+		avg += (rhodamineData - samples_avg.front())/n_avg;
+		samples_avg.pop();
+		samples_avg.push(rhodamineData);
+
+		if(avg > treshold){
 			pubChangeMission.publish(latLonData);
 		}
 	}
@@ -82,6 +94,10 @@ public:
 	auv_msgs::NavSts latLonData;
 	double rhodamineData;
 	double treshold;
+
+	int n_avg;
+	std::queue<double> samples_avg;
+	double avg;
 
 };
 
