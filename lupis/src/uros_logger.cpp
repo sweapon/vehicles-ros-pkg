@@ -64,6 +64,8 @@ public:
 		subTemperatureData = nh.subscribe<sensor_msgs::Temperature>("temp", 1, &UROSLogger::onTemperatureData, this);
 		subPositionData = nh.subscribe<auv_msgs::NavSts>("state_out",1, &UROSLogger::onPositionData, this);
 
+		pubChangeMission = nh.advertise<auv_msgs::NavSts>("change_mission", 1);
+
 	}
 
 	~UROSLogger(){
@@ -97,12 +99,6 @@ public:
 			log_file << "%-1" << std::endl;
 			log_file << "%Time (unix time), Latitude (decimal degree), Longitude(decimal degree), Depth (m), Rhodamine (ppb), Crude, Refined, Temperature (C)" << std::endl;
 
-			// Test line
-//			std::time_t t = std::time(0);
-//			ss.str(std::string());
-//			ss <<t<<","<<latLonData.global_position.latitude<<","<<latLonData.global_position.longitude<<","<<latLonData.position.depth<<","<<rhodamineData<<",0,0";
-//			log_file << ss.str() << std::endl;
-
 			return true;
 		} else {
 			return false;
@@ -124,9 +120,9 @@ public:
 
 	void onPositionData(const auv_msgs::NavSts::ConstPtr& data){
 		latLonData = *data;
-                if((counter++)%20 == 0){
-			if(log_file.is_open())
-				writeLog();
+        if((counter++)%2 == 0){ /* Set logging frequency */
+        	if(log_file.is_open())
+            	writeLog();
 		}
 	}
 
@@ -139,13 +135,13 @@ public:
 
 	ros::Subscriber subRhodamineData, subPositionData, subTemperatureData;
 
+	ros::Publisher pubChangeMission;
+
 	double rhodamineData;
 	double temperatureData;
 	auv_msgs::NavSts latLonData;
-
-        unsigned int counter;
-
-        const double badReading;
+    unsigned int counter;
+    const double badReading;
 
 };
 
