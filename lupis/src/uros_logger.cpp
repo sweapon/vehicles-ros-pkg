@@ -63,9 +63,6 @@ public:
 		subRhodamineData = nh.subscribe<std_msgs::Float32>("adc", 1, &UROSLogger::onRhodamineData, this);
 		subTemperatureData = nh.subscribe<sensor_msgs::Temperature>("temp", 1, &UROSLogger::onTemperatureData, this);
 		subPositionData = nh.subscribe<auv_msgs::NavSts>("state_out",1, &UROSLogger::onPositionData, this);
-
-		pubChangeMission = nh.advertise<auv_msgs::NavSts>("change_mission", 1);
-
 	}
 
 	~UROSLogger(){
