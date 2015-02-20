@@ -1,7 +1,7 @@
-<!--/*****************************************************************
- * test.launch
+/*********************************************************************
+ * uros_mission_change.cpp
  *
- *  Created on: Aug 20, 2014
+ *  Created on: Feb 17, 2015
  *      Author: Filip Mandic
  *
  ********************************************************************/
@@ -9,7 +9,7 @@
 /*********************************************************************
 * Software License Agreement (BSD License)
 *
-*  Copyright (c) 2014, LABUST, UNIZG-FER
+*  Copyright (c) 2015, LABUST, UNIZG-FER
 *  All rights reserved.
 *
 *  Redistribution and use in source and binary forms, with or without
@@ -38,45 +38,78 @@
 *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 *  POSSIBILITY OF SUCH DAMAGE.
-******************************************************************/-->
+*********************************************************************/
+#include <queue>
 
-<launch>
+#include <ros/ros.h>
 
-    <!-- ========================================================= -->
-    <!-- == Arguments ============================================ -->
-    <!-- ========================================================= -->
+#include <std_msgs/Float32.h>
+#include <auv_msgs/NavSts.h>
 
-    <!--<arg name="use_ident" default="0"/>-->
-    <arg name="use_joy" default="1"/>
+class UROSMissionChange{
 
-    <!-- ========================================================= -->
-    <!-- == Nu Manual node ======================================= -->
-    <!-- ========================================================= -->
+public:
 
-    <node 
-        pkg="videoray" 
-        type="videoray_node" 
-        name="videoray_node">
-	</node>
-    <node 
-		if="$(arg use_joy)" 
-		pkg="joy"  
-		type="joy_node" 
-		name="joystick">
-	</node>
-    <!-- ========================================================= -->
-    <!-- == Ref Manual node ====================================== -->
-    <!-- ========================================================= -->
-<!--
-    <node 
-        pkg="labust_control" 
-        type="ref_manual" 
-        name="ManualStateRef" >
+	UROSMissionChange():rhodamineData(-1.0), treshold(10.0), n_avg(10), avg(0){
 
-	   <remap from="Enable" to="REF_enable" />
-	</node>-->
+		ros::NodeHandle nh;
+
+		subRhodamineData = nh.subscribe<std_msgs::Float32>("adc", 1, &UROSMissionChange::onRhodamineData, this);
+		subPositionData = nh.subscribe<auv_msgs::NavSts>("state_out",1, &UROSMissionChange::onPositionData, this);
+
+		pubChangeMission = nh.advertise<auv_msgs::NavSts>("change_mission", 1);
 
 
+		/*** Init Simple moving average filter ***/
+
+		for(int i = 0; i < n_avg-1; i++){
+			samples_avg.push(0);
+		}
+	}
+
+	~UROSMissionChange(){
+
+	}
+
+	void onRhodamineData(const std_msgs::Float32::ConstPtr& data){
+		rhodamineData = data->data;
+
+		/*** Calculate Simple moving average ***/
+
+		avg += (rhodamineData - samples_avg.front())/n_avg;
+		samples_avg.pop();
+		samples_avg.push(rhodamineData);
+
+		if(avg > treshold){
+			pubChangeMission.publish(latLonData);
+		}
+	}
+
+	void onPositionData(const auv_msgs::NavSts::ConstPtr& data){
+		latLonData = *data;
+	}
+
+	ros::Subscriber subRhodamineData, subPositionData;
+	ros::Publisher pubChangeMission;
+
+	auv_msgs::NavSts latLonData;
+	double rhodamineData;
+	double treshold;
+
+	int n_avg;
+	std::queue<double> samples_avg;
+	double avg;
+
+};
+
+int main(int argc, char* argv[]){
+
+	ros::init(argc,argv,"uros_mission_change_node");
+
+	UROSMissionChange MC;
+	ros::spin();
+	return 0;
+}
 
 
-</launch>
+
