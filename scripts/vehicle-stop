@@ -1,3 +1,9 @@
 #!/bin/bash
+# Load the configuration
+source /etc/ros/$1/env.bash
+# Finish all nodes
+rosnode kill --all
 PID=$(cat /var/run/$1/vehicle.pid)
-kill -6 ${PID}
+kill ${PID}
+# Remove the PID
+rm -f /var/run/$1/vehicle.pid

@@ -7,6 +7,8 @@ source ${ROS_HOME}/devel/setup.bash
 
 # Vehicle configuration environment
 source `rospack find ${VEHICLE}`/data/devices/device_config.bash
+source `rospack find ${VEHICLE}`/data/control/control_config.bash
+source `rospack find ${VEHICLE}`/data/navigation/navigation_config.bash
 
 # Launch configuration
 LAUNCH_PKG=pladypos

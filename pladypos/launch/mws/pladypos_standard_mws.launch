@@ -1,7 +1,17 @@
 <launch>
   <!-- The configuration assumes direct connection to ublox GPS and Spatial -->
-  <!-- GPS: ublox, IMU: spatial, DVL: none -->
+  <!-- GPS: UBLOX, SPATIAL on a Multiplexer Switch, IMU: spatial, DVL: none -->
   <!-- Namespace: none -->
+
+  <!-- Arguments -->
+  <arg name="allocation" default="$(find snippets)/data/allocations/x_horizontal.yaml" />
+  
+  <!-- Load parameters -->
+  <rosparam file="$(find pladypos)/data/navigation/params/nav_standard.yaml"/>
+  <rosparam file="$(find pladypos)/data/control/params/controllers_standard.yaml"/>
+  <rosparam file="$(find pladypos)/data/dynamics/pladypos.yaml" />
+  <rosparam file="$(find snippets)/data/allocations/x_horizontal.yaml" />
+  
   <!-- Load sensors --> 
   <include file="$(find pladypos)/data/devices/ublox.xml">
 	<arg name="use_ublox_gps" value="false" />
@@ -14,7 +24,15 @@
 	args="gps fix_ublox fix_spatial" >
     	<remap from="mux" to="gps_select" />
   </node>
+  <!-- Static TF -->
+  <include file="$(find pladypos)/data/devices/static_frames.xml"/>
 
+  <!-- Load the navigation -->
+  <include file="$(find pladypos)/data/navigation/navigation_standard.xml"/>
+  
+  <!-- Load the controllers -->
+  <include file="$(find pladypos)/data/control/control_standard.xml"/>
+  
   <!-- Load driver -->
   <include file="$(find pladypos)/data/devices/arduino_driver.xml"/>
 
