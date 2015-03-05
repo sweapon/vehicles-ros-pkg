@@ -1,0 +1,24 @@
+<launch>
+  <!-- The configuration assumes direct connection to ublox GPS and Spatial -->
+  <!-- GPS: ublox, IMU: spatial, DVL: none -->
+  <!-- Namespace: none -->
+  <!-- Load sensors --> 
+  <include file="$(find pladypos)/data/devices/ublox.xml">
+	<arg name="use_ublox_gps" value="false" />
+  </include>
+  <include file="$(find pladypos)/data/devices/spatial.xml" >
+	<arg name="use_spatial_gps" value="false" />
+  </include>
+  <!-- GPS muxer -->
+  <node pkg="topic_tools" type="mux" name="gps_mux" 
+	args="gps fix_ublox fix_spatial" >
+    	<remap from="mux" to="gps_select" />
+  </node>
+
+  <!-- Load driver -->
+  <include file="$(find pladypos)/data/devices/arduino_driver.xml"/>
+
+  <!-- Load multi-master with full sync -->
+  <node pkg="master_discovery_fkie" type="zeroconf" name="zeroconf" />
+  <node pkg="master_sync_fkie" type="master_sync" name="master_sync" />
+</launch>

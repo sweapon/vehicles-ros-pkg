@@ -4,7 +4,7 @@
 
     <node pkg="videoray" type="pro4_node" name="pro4_driver">
   	<remap from="pwm_in" to="pwm_out" />
-	<param name="PortName" value="/dev/ttyUSB1" />
+	<param name="PortName" value="/dev/ttyS2" />
 	<param name="Baud" value="115200" />
         <param name="max" value="1.0"/>
         <param name="min" value="-1.0"/>
@@ -24,12 +24,12 @@
                 <remap from="nuRef" to="nuRefMerged" />
     </node>
 
-     <node pkg="joy" name="joystick" type="joy_node">
+<!--     <node pkg="joy" name="joystick" type="joy_node">
                 <param name="dev" value="/dev/input/js1" />
                 <param name="coalesce_interval" value="0.01" />
                 <param name="autorepeat_rate" value="10" />
                 <param name="deadzone" value="0.05" />
         </node>
-
+-->
 
 </launch>

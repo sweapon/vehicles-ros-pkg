@@ -1,0 +1,3 @@
+#!/bin/bash
+PID=$(cat /var/run/$1/vehicle.pid)
+kill -6 ${PID}

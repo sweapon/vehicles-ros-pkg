@@ -1,0 +1,12 @@
+#!/bin/bash
+# Load configuration environment
+# The environment should supply the following variables:
+#   - LAUNCH_PKG - the launch package 
+#   - LAUNCH_FILE - the launch filename
+source /etc/ros/$1/env.bash
+echo "Configuration file loaded: /etc/ros/$1/env.bash"
+echo "Launching ROS_HOSTNAME=$ROS_HOSTNAME, ROS_IP=$ROS_IP, ROS_MASTER_URI=$ROS_MASTER_URI, ROS_LOG_DIR=$ROS_LOG_PATH"
+roslaunch ${LAUNCH_PKG} ${LAUNCH_FILE} &
+PID=$!
+echo "$PID" > /var/run/$1/vehicle.pid
+wait "$PID"
