@@ -43,20 +43,26 @@
 #include <ros/ros.h>
 #include <labust/drivers/ethernetRelayDriver.hpp>
 
-int main(int argc, char* argv[]){
-
+int main(int argc, char* argv[])
+{
 	ros::init(argc,argv,"ethernet_relay_node");
 	ros::NodeHandle nh, ph("~");
 
-	std::string address("192.168.1.4");
+	std::string address("pladypos-eth");
 	int port(17494);
-	ph.param("ip",address, address);
+	ph.param("ip", address, address);
 	ph.param("port", port, port);
 
 	using namespace labust::drivers;
+	try
+	{
+		EthernetRelayDriver ERD(address, port);
+		ros::spin();
+	}
+	catch (std::exception& e)
+	{
+		ROS_ERROR("Failed initializing ERD with error: %s", e.what());
+	}
 
-	EthernetRelayDriver ERD(address.c_str(), port);
-
-	ros::spin();
 	return 0;
 }

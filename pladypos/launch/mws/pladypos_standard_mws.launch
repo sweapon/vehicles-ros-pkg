@@ -35,6 +35,9 @@
   
   <!-- Load driver -->
   <include file="$(find pladypos)/data/devices/arduino_driver.xml"/>
+  
+  <!-- Load relay module -->
+  <include file="$(find pladypos)/data/devices/relay_module.xml"/>
 
   <!-- Load multi-master with full sync -->
   <node pkg="master_discovery_fkie" type="zeroconf" name="zeroconf" />

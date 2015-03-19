@@ -16,6 +16,7 @@
 	<!-- Rqt with GUI setup -->
 	<node pkg="rqt_gui" type="rqt_gui" name="control_gui" 
 		args="--perspective-file $(find pladypos)/data/topside/$(arg perspective_file)">
+		<param name="relay/config" value="(find pladypos)/data/devices/pladypos_eth.xml" />
 		<remap from="stateRef" to="position" />
 	</node>
 		

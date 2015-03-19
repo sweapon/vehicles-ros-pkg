@@ -1,0 +1,11 @@
+<launch> 
+  <!-- The main relay module -->
+  <arg name="ip" default="$(env RELAY_MODULE_IP pladypos-eth)" />
+  <arg name="port" default="$(optenv RELAY_MODULE_PORT 17494)" />
+  
+  <node pkg=" ethernet_relay_driver" name="ethernet_relay_node" type="eth_module">
+    <param name="ip" value="$(arg ip)"/>
+    <param name="port" value="$(arg ip)"/>
+    <remap from="ethernet_relay" to="pladypos_eth" />
+  </node>
+</launch>
