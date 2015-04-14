@@ -1,0 +1,40 @@
+<launch>
+	<!-- Set all arguments -->
+	<arg name="joy_dev" default="$(optenv JOYSTICK /dev/input/js0)" />
+	<arg name="use_neptus" default="$(optenv USE_NEPTUS false)" />
+	<arg name="logging" default="$(optenv LOGGING false)" />
+	<arg name="perspective_file" default="$(optenv GUI_PERSPECTIVE pladypos_default.perspective)" />
+	
+	<!-- Start the joystick for control -->   
+	<node pkg="joy" name="joystick" type="joy_node">
+		<param name="dev" value="$(arg joy_dev)" />
+		<param name="coalesce_interval" value="0.01" />
+		<param name="autorepeat_rate" value="10" />
+		<param name="deadzone" value="0.05" />
+	</node>
+	
+	<!-- Rqt with GUI setup -->
+	<node pkg="rqt_gui" type="rqt_gui" name="control_gui" 
+		args="--perspective-file $(find pladypos)/data/topside/$(arg perspective_file)">
+		<param name="relay/config" value="(find pladypos)/data/devices/pladypos_eth.xml" />
+		<remap from="stateRef" to="position" />
+	</node>
+		
+	<!-- The background clock server -->
+	<node pkg="snippets" type="clock_server.py" name="topside_clock">
+		<rosparam param="track_clocks">["/pladypos_clock"]</rosparam>
+		<remap from="clock" to="topside_clock" />
+	</node>
+	
+	<!-- Neptus bridge link -->
+	<group if="$(arg use_neptus)">
+		<include file="$(find pladypos)/data/topside/neptus_bridge.xml" />
+	</group>
+	
+	<!-- Start topside logging -->
+    <node pkg="rosbag" type="record" name="logger" args="-a -o topside_" if="$(arg logging)" />
+	
+    <!-- Load multi-master with full sync -->
+  	<node pkg="master_discovery_fkie" type="zeroconf" name="zeroconf" />
+  	<node pkg="master_sync_fkie" type="master_sync" name="master_sync" />  
+</launch>

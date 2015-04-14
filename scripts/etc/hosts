@@ -1,0 +1,37 @@
+127.0.0.1	localhost
+
+# Topside stations
+10.0.10.1	topside-gateway
+10.0.10.2	base-bullet
+10.0.10.8	ntpserver
+
+# Topside computers
+10.0.10.30	elitebook
+
+# Lupis vehicle addresses
+10.0.10.130	lupis
+10.0.10.131	lupis-pico
+10.0.10.133	lupis-backseat
+
+# PlaDyPos
+10.0.10.140	pladypos
+10.0.10.141	pladypos-bullet
+10.0.10.142	pladypos-camera
+10.0.10.143	pladypos-eth
+10.0.10.144	pladypos-axis
+
+# Buddy vehicles addresses
+10.0.10.160	buddy
+10.0.10.162	buddy-electric-eth
+10.0.10.163	buddy-motor-eth
+10.0.10.170	buddy-nuc
+10.0.10.171	buddy-vision-eth
+10.0.10.162	buddy-aris
+10.0.10.163	buddy-camera
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters

@@ -14,3 +14,6 @@ echo "sudo rm -f /etc/init/ros/$1.conf"
 sudo rm -f /etc/init/ros/$1.conf
 echo "sudo rm -f /etc/ros/$1"
 sudo rm -f /etc/ros/$1
+echo "sudo mv -f /etc/hosts{.old,}"
+sudo mv -f /etc/hosts{.old,}
+

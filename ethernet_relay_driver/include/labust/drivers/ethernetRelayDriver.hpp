@@ -58,12 +58,12 @@ namespace labust{
 
 		public:
 
-		    EthernetRelayDriver(std::string host, int port);
+		    EthernetRelayDriver(const std::string& host, int port);
 
 			~EthernetRelayDriver();
 
 			/* Configure TCP/IP connection. */
-			void configure(std::string host, int port);
+			void configure(const std::string& host, int port);
 
 			/* The method encodes the given into the output buffer. */
 			bool encode(int command, uint8_t relay = 0, uint8_t timeout = 0);
@@ -139,7 +139,8 @@ namespace labust{
 		 *
 		*************************************************************/
 
-		EthernetRelayDriver::EthernetRelayDriver(std::string host, int port):socket(io_service){
+		EthernetRelayDriver::EthernetRelayDriver(const std::string& host, int port):
+						socket(io_service){
 
 			outputBuffer.resize(1);
 			inputBuffer.resize(1);
@@ -154,16 +155,23 @@ namespace labust{
 			subRelayRequest = nh.subscribe<std_msgs::UInt8>("relayRequest",1,&EthernetRelayDriver::onRelayRequest,this);
 
 			/** Services */
-			srvRelayCommand = nh.advertiseService("etherent_relay", &EthernetRelayDriver::relayService,this);
+			srvRelayCommand = nh.advertiseService("ethernet_relay", &EthernetRelayDriver::relayService,this);
 		}
 
 		EthernetRelayDriver::~EthernetRelayDriver(){
 
 		}
 
-		void EthernetRelayDriver::configure(std::string host, int port){
-
-			tcp::endpoint endpoint(boost::asio::ip::address::from_string(host.c_str()), port);
+		void EthernetRelayDriver::configure(const std::string& host, int port)
+		{
+			//Port value to string
+			std::stringstream out;
+			out<<port;
+			//Resolve by IP or host name
+			tcp::resolver resolver(io_service);
+			tcp::resolver::query query = tcp::resolver::query(tcp::v4(), host, out.str());
+			tcp::endpoint endpoint = *resolver.resolve(query);
+			//tcp::endpoint endpoint(boost::asio::ip::address::from_string(host.c_str()), port);
 			socket.connect(endpoint);
 
 			if(socket.is_open()){
