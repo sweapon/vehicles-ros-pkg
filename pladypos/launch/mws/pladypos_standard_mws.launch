@@ -5,6 +5,7 @@
 
   <!-- Arguments -->
   <arg name="allocation" default="$(find snippets)/data/allocations/x_horizontal.yaml" />
+  <arg name="logging" default="$(optenv LOGGING false)" />
   
   <!-- Load parameters -->
   <rosparam file="$(find pladypos)/data/navigation/params/nav_standard.yaml"/>
@@ -35,6 +36,14 @@
   
   <!-- Load driver -->
   <include file="$(find pladypos)/data/devices/arduino_driver.xml"/>
+
+  <!-- The background clock server -->
+  <node pkg="snippets" type="clock_server.py" name="pladypos_clock">
+	<remap from="clock" to="pladypos_clock" />
+  </node>
+
+  <!-- Start logger -->
+  <node pkg="rosbag" type="record" name="logger" args="-a -o pladypos_" if="$(arg logging)" />
 
   <!-- Load multi-master with full sync -->
   <node pkg="master_discovery_fkie" type="zeroconf" name="zeroconf" />
