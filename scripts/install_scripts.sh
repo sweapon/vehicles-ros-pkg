@@ -12,6 +12,8 @@ sudo ln -s ${DIR}/vehicle-stop /usr/local/sbin/vehicle-stop
 # Link service and configuration
 echo "sudo mkdir -p /etc/init/ros"
 sudo mkdir -p /etc/init/ros
+echo "sudo mkdir -p /etc/ros"
+sudo mkdir -p /etc/ros
 echo "sudo cp ${DIR}/../$1/data/upstart/$1.conf /etc/init/ros/$1.conf"
 sudo cp ${DIR}/../$1/data/upstart/$1.conf /etc/init/ros/$1.conf
 echo "sudo ln -s ${DIR}/../$1/data/upstart /etc/ros/$1"

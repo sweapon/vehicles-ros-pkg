@@ -16,6 +16,6 @@ LAUNCH_PKG=pladypos
 LAUNCH_FILE=pladypos_standard_mws.launch
 
 # Configure logging
-LOG_PATH=/extern/launcher
-ROS_LOG_PATH=/extern/ros
+LOG_PATH=/home/${USER}/logs/launcher
+ROS_LOG_PATH=/home/${USER}/logs/ros
 LOGGING=false
