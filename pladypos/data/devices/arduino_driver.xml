@@ -6,10 +6,26 @@
   <node pkg="rosserial_python" type="serial_node.py" name="arduino" args="$(arg driver_port)" />
   
   <!-- Thrust allocator -->  
-  <node pkg="pladypos" name="pladypos_node" type="pladypos_node_v3">
-    <param name="maxThrust" value="1"/>
-    <param name="minThrust" value="-1"/>
-    <param name="max_cap" value="0.85"/>
-    <remap from="tauIn" to="tauOut" />
+  <node pkg="labust_allocation" name="alloc" type="allocation_node">
+    <rosparam command="load" 
+  	     file="$(find pladypos)/data/allocation/xconfig.yaml" />   
+    <!-- Allocator type -->
+    <param name="allocation_plugin" value="labust::allocation::X2dAdaptive" />
+    <!-- Allocator parameter -->
+    <param name="minN" value="2" />
+  </node>
+  
+  <!-- Thrust allocation test -->
+  <node pkg="labust_allocation" name="alloc_nd" type="allocation_node">
+    <rosparam command="load" 
+  	     file="$(find pladypos)/data/allocation/xconfig.yaml" />   
+    <!-- Allocator type -->
+    <param name="allocation_plugin" value="labust::allocation::X2dAdaptive" />
+    <!-- Allocator parameter -->
+    <param name="minN" value="2" />
+    <param name="daisy_chain" value="false" />
+    <!-- Remap output -->
+    <remap from="pwm_out" to="pwm_out_nd" />
+    <remap from="tau_ach" to="tau_ach_nd" />
   </node>
 </launch>
