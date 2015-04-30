@@ -1,12 +1,17 @@
+#include <Timer.h>
 #include <ros.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/UInt8.h>
 
+///ADC publish timer
+Timer t;
+
 //Define constants
 enum {
   DRIVER_NUM=4, 
   MAX_IDLE=1000,
+  ADC_SAMPLE=100,
   PWM_MAX=255};
 //PWM pins are selected to be dependent on timers 3,4 on the Mega2560
 //Pins 2,3,5 (Timer3), Pins 6,7,8 (Timer4)
@@ -21,8 +26,10 @@ float cs_calib_a[DRIVER_NUM]={5.0/1023,5.0/1023,5.0/1023,5.0/1023};
 float cs_calib_b[DRIVER_NUM]={0,0,0,0};
 
 //Voltage variables
-float volt_calib_a = 5.0/1023;
-float volt_calib_b = 0;
+float volt_calib_a = 55.0/1023;
+float volt_calib_b = 0.04;
+long int last_s = 0;
+float Tv = 0.5;
 
 //Define ROS callbacks for input data
 void pwmCb(const std_msgs::Float32MultiArray& values);
@@ -36,9 +43,11 @@ ros::Publisher current_out("current", &csout);
 ros::Publisher battery_voltage("battery_voltage", &batteryout);
 
 //Define internals
-int idle(0);
+long int last_cmd(0);
 
 void setup(){
+  //Init data
+  batteryout.data = 0;
   //Configure input/output pins
   for (int i=0; i<DRIVER_NUM; ++i)
   {
@@ -64,6 +73,9 @@ void setup(){
   //Configure prescalers for PWM drivers (maximum frequency)  
   TCCR3B = TCCR3B & 0b11111000 | 0x01;
   TCCR4B = TCCR4B & 0b11111000 | 0x01;
+  
+  ///Setup timer 
+  t.every(100, publishAdc);
 }
 
 void loop(){
@@ -74,13 +86,12 @@ void loop(){
   //Check for new ROS stuff
   nh.spinOnce();
   //Safety timeout
-  if (++idle > MAX_IDLE)
+  if (millis() - last_cmd > MAX_IDLE)
   {
     zeroAll();
-    idle = 0;
   }      
-  //Small NOP
-  delay(1);
+  //Update scheduler
+  t.update();
 }
 
 void pwmCb(const std_msgs::Float32MultiArray& values)
@@ -102,12 +113,8 @@ void pwmCb(const std_msgs::Float32MultiArray& values)
     }
   }
 
-  //Return sensing data  
-  current_out.publish(&csout);
-  battery_voltage.publish(&batteryout);
-
   //Reset idle command
-  idle = 0;
+  last_cmd = millis();
 }
 
 void zeroAll()
@@ -135,7 +142,19 @@ void voltageSensing()
   //Read analog input
   int voltage = analogRead(volt);
   //Scale to real value
-  batteryout.data = volt_calib_a*voltage + volt_calib_b;
+  float um = volt_calib_a*voltage + volt_calib_b;
+  long int Ts = millis() - last_s;
+  last_s = millis();
+  float fc = Tv/Ts*1000;  
+  
+  if (Ts > 0)
+    batteryout.data = (fc*batteryout.data + um)/(1+fc);
 }
 
+void publishAdc()
+{
+   //Return sensing data  
+   current_out.publish(&csout);
+   battery_voltage.publish(&batteryout);
+}
 
