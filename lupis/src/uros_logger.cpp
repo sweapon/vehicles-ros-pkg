@@ -117,7 +117,7 @@ public:
 
 	void onPositionData(const auv_msgs::NavSts::ConstPtr& data){
 		latLonData = *data;
-        if((counter++)%2 == 0){ /* Set logging frequency */
+        if((counter++)%1 == 0){ /* Set logging frequency */
         	if(log_file.is_open())
             	writeLog();
 		}
