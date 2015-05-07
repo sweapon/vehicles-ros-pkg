@@ -145,6 +145,9 @@ public:
 		msg.global_position.latitude = latLonData.latitude;
 		msg.global_position.longitude = latLonData.longitude;
 
+		ROS_ERROR("NEW MISSION POSITION");
+		ROS_ERROR("LAT: %f, LON: %f", msg.global_position.latitude, msg.global_position.longitude);
+
 		pubChangeMission.publish(msg);
 	}
 
