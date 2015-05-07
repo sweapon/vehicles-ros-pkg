@@ -63,7 +63,8 @@ public:
 			              n_avg(10),
 			              avg(0),
 			              smallRowsActive(false),
-			              autoStart(false){
+			              autoStart(false),
+			              missionDepth(0){
 
 		ros::NodeHandle nh, ph("~");
 
@@ -74,6 +75,8 @@ public:
 
 		pubChangeMission = nh.advertise<auv_msgs::NavSts>("change_mission", 1);
 		pubAbort = nh.advertise<std_msgs::Bool>("abort_in", 1);
+		pubAutoStartFlag = nh.advertise<std_msgs::Bool>("autosStartFlag", 1);
+
 
 
 		ph.param("autoStart", autoStart, autoStart);
@@ -101,6 +104,10 @@ public:
 
 		std::pair<double,double> distance = labust::tools::deg2meter(diffLat, diffLon, lastRowsPos.latitude);
 
+		if(avg > treshold){
+			std_msgs::Bool msg;
+			pubAutoStartFlag.publish(msg);
+		}
 		//if(abs(distance.first) > 20 && abs(distance.second) > 20){
 			if(avg > treshold && !smallRowsActive && autoStart){
 				changeMission();
@@ -110,14 +117,7 @@ public:
 
 	void onPositionData(const auv_msgs::NavSts::ConstPtr& data){
 		latLonData = data->global_position;
-
-	}
-
-	void onMissionState(const auv_msgs::NavSts::ConstPtr& data){
-
-		if(1 == FINISHED){
-			smallRowsActive = false;
-		}
+		missionDepth = data->position.depth;
 	}
 
 	void onCmd(const std_msgs::UInt8::ConstPtr& data){
@@ -145,6 +145,8 @@ public:
 		msg.global_position.latitude = latLonData.latitude;
 		msg.global_position.longitude = latLonData.longitude;
 
+		msg.position.depth = missionDepth;
+
 		ROS_ERROR("NEW MISSION POSITION");
 		ROS_ERROR("LAT: %f, LON: %f", msg.global_position.latitude, msg.global_position.longitude);
 
@@ -152,7 +154,7 @@ public:
 	}
 
 	ros::Subscriber subRhodamineData, subPositionData, subMissionState, subCmd;
-	ros::Publisher pubChangeMission, pubAbort;
+	ros::Publisher pubChangeMission, pubAbort, pubAutoStartFlag;
 
 	auv_msgs::DecimalLatLon latLonData;
 	auv_msgs::DecimalLatLon lastRowsPos;
@@ -161,7 +163,7 @@ public:
 
 	int n_avg;
 	std::queue<double> samples_avg;
-	double avg;
+	double avg, missionDepth;
 
 	bool smallRowsActive, autoStart;
 
