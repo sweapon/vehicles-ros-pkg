@@ -1,0 +1,6 @@
+<launch>
+  <arg name="camera_address" default="$(optenv CAMERA_ADDRESS http://10.0.10.142/snap.jpg)" />
+  <node pkg="camera_image_processing" type="curl_camera_driver_node" name="bosch_camera" >
+   <param name="camera_address" value="$(arg camera_address)" />
+ </node>
+</launch>
