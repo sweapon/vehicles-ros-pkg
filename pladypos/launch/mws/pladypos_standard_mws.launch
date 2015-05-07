@@ -34,6 +34,9 @@
   <!-- Load the controllers -->
   <include file="$(find pladypos)/data/control/control_standard.xml"/>
   
+  <!-- Load the primitives -->
+  <include file="$(find pladypos)/data/control/primitives_standard.xml"/>
+  
   <!-- Load driver -->
   <include file="$(find pladypos)/data/devices/arduino_driver.xml"/>
   

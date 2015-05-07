@@ -1,0 +1,80 @@
+<!--/*****************************************************************
+ * labust_primitives_template.launch
+ *
+ *  Created on: Apr 16, 2014
+ *      Author: Filip Mandic
+ *
+ *****************************************************************/-->
+
+<launch>
+
+    <!-- ========================================================= -->
+    <!-- == Arguments ============================================ -->
+    <!-- ========================================================= -->
+
+	<group>
+ 	    <remap from="out" to="stateRef" />
+ 	    <remap from="state" to="position" />
+
+		<!-- ===================================================== -->
+		<!-- == CourseKeeping FA node ============================ -->
+		<!-- ===================================================== -->
+
+		<node 
+			pkg="labust_primitives" 
+			type="course_keeping_FA"
+			name="course_keeping_FA" >
+
+			<param name="underactuated" value="false" />
+		</node>
+
+		<!-- ===================================================== -->
+		<!-- == CourseKeeping UA node ============================ -->
+		<!-- ===================================================== -->
+
+		<node 
+			pkg="labust_primitives" 
+			type="course_keeping_UA"
+			name="course_keeping_UA" >
+
+			<param name="underactuated" value="true" />
+		</node>
+
+		<!-- ===================================================== -->
+		<!-- == Dynamic Positioning node ========================= -->
+		<!-- ===================================================== -->
+
+		<node 
+			pkg="labust_primitives"
+			type="dp_primitive"
+			name="dp_primitive">
+		 	
+			<param name="underactuated" value="false" />
+		 </node>
+
+		<!-- ===================================================== -->
+		<!-- == Go2Point FA node ================================= -->
+		<!-- ===================================================== -->
+
+		<node 
+			pkg="labust_primitives"
+			type="go2point_FA"
+			name="go2point_FA">
+
+			<param name="underactuated" value="false" />
+		</node>
+
+		<!-- ===================================================== -->
+		<!-- == Go2Point UA node ================================= -->
+		<!-- ===================================================== -->
+
+		<node 
+			pkg="labust_primitives"
+			type="go2point_UA"
+			name="go2point_UA">
+
+			<param name="underactuated" value="true" />
+		</node>
+
+	</group>
+</launch>

@@ -17,13 +17,27 @@
 		<remap from="state" to="position" />
 		<remap from="windup" to="tauAch" />
 
+		<!-- FADP controller node ================================ -->
 		<node pkg="labust_control" type="fadp_controller2" name="station_keeping">
 			<remap from="Enable" to="FADP_enable" />
 			<remap if="$(arg use_trackpoint)" from="ref" to="TrackPoint" />
 		</node>
-
+		
+		<!-- HDG controller node ================================ -->
 		<node pkg="labust_control" type="hdg_controller2" name="hdg_control">
 			<remap from="Enable" to="HDG_enable" />
+		</node>
+		
+		<!-- FALF controller node ================================ -->
+		<node pkg="labust_control" type="ualf_controller" name="ualf_controller">
+		    <remap from="Enable" to="UALF_enable" />
+	        <param name="underactuated" value="false" />
+		</node>
+
+        <!-- UALF controller node ================================ -->
+		<node pkg="labust_control" type="ualf_controller" name="ualf_controller_1">
+		    <remap from="Enable" to="UALF_enable_1" />
+		    <param name="underactuated" value="true" />
 		</node>
 
 		<node pkg="labust_control" type="async_merger" name="nu_merger">
