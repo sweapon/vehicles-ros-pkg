@@ -47,6 +47,8 @@
 #include <std_msgs/Bool.h>
 #include <std_msgs/UInt8.h>
 #include <auv_msgs/NavSts.h>
+#include <misc_msgs/RhodamineAdc.h>
+
 
 #include <labust/tools/GeoUtilities.hpp>
 
@@ -65,7 +67,7 @@ public:
 
 		ros::NodeHandle nh, ph("~");
 
-		subRhodamineData = nh.subscribe<std_msgs::Float32>("adc", 1, &UROSMissionChange::onRhodamineData, this);
+		subRhodamineData = nh.subscribe<misc_msgs::RhodamineAdc>("adc", 1, &UROSMissionChange::onRhodamineData, this);
 		subPositionData = nh.subscribe<auv_msgs::NavSts>("state_out",1, &UROSMissionChange::onPositionData, this);
 		//subMissionState = nh.subscribe<auv_msgs::NavSts>("dune_mission_state",1, &UROSMissionChange::onMissionState, this);
 		subCmd = nh.subscribe<std_msgs::UInt8>("cmd",1, &UROSMissionChange::onCmd, this);
@@ -86,8 +88,8 @@ public:
 
 	}
 
-	void onRhodamineData(const std_msgs::Float32::ConstPtr& data){
-		rhodamineData = data->data;
+	void onRhodamineData(const misc_msgs::RhodamineAdc::ConstPtr& data){
+		rhodamineData = data->adc;
 
 		/*** Calculate Simple moving average ***/
 		avg += (rhodamineData - samples_avg.front())/n_avg;

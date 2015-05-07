@@ -51,6 +51,7 @@
 #include <std_msgs/Float32.h>
 #include <auv_msgs/NavSts.h>
 #include <sensor_msgs/Temperature.h>
+#include <misc_msgs/RhodamineAdc.h>
 
 class UROSLogger{
 
@@ -60,7 +61,7 @@ public:
 
 		ros::NodeHandle nh;
 
-		subRhodamineData = nh.subscribe<std_msgs::Float32>("adc", 1, &UROSLogger::onRhodamineData, this);
+		subRhodamineData = nh.subscribe<misc_msgs::RhodamineAdc>("adc", 1, &UROSLogger::onRhodamineData, this);
 		subTemperatureData = nh.subscribe<sensor_msgs::Temperature>("temp", 1, &UROSLogger::onTemperatureData, this);
 		subPositionData = nh.subscribe<auv_msgs::NavSts>("state_out",1, &UROSLogger::onPositionData, this);
 	}
@@ -111,8 +112,8 @@ public:
 
 	}
 
-	void onRhodamineData(const std_msgs::Float32::ConstPtr& data){
-		rhodamineData = data->data;
+	void onRhodamineData(const misc_msgs::RhodamineAdc::ConstPtr& data){
+		rhodamineData = data->adc;
 	}
 
 	void onPositionData(const auv_msgs::NavSts::ConstPtr& data){
