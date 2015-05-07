@@ -140,7 +140,12 @@ public:
 		avg = 0;
 		smallRowsActive = true;
 		lastRowsPos = latLonData;
-		pubChangeMission.publish(latLonData);
+
+		auv_msgs::NavSts msg;
+		msg.global_position.latitude = latLonData.latitude;
+		msg.global_position.longitude = latLonData.longitude;
+
+		pubChangeMission.publish(msg);
 	}
 
 	ros::Subscriber subRhodamineData, subPositionData, subMissionState, subCmd;
