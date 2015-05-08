@@ -2,10 +2,18 @@
 	<arg name="use_ident" default="$(optenv USE_IDENTIFICATION false)" />
 	<arg name="use_trackpoint" default="$(optenv USE_TRACKPOINT false)" />
 		
+    <node if="$(arg use_ident)" pkg="ident_so" type="ident_so" 
+        name="identification">
+	<param name="useUV" value="false" />
+	<param name="integrateUV" value="false" />
+        <remap from="tauOut" to="tauIdent" />
+        <remap from="meas" to="measurement" />
+    </node>
 	<!-- Low-level controller -->
 	<node pkg="labust_control" type="velocity_control" name="velcon">
 		<remap from="nuRef" to="nuRefMerged" />
 		<remap from="stateHat" to="position" />
+		<remap from="meas" to="measurement" />
 	</node>
 
 	<!-- ========================================================= -->

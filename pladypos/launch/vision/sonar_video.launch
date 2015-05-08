@@ -1,0 +1,13 @@
+<launch>
+  <arg name="logging" default="true" />
+
+  <include file="$(find pladypos)/data/camera/camera.xml">
+	<arg name="camera_address" value="http://10.0.10.142/snap.jpg" />
+  </include>
+  
+  <include file="$(find pladypos)/data/sonar/sonar.xml">
+	<arg name="altitude_offset" value="0.55" />
+  </include>
+
+  <node pkg="rosbag" type="record" name="vision_logger" args="-e '(.*)/camera(.*)|(.*)/sonar/(.*)|(.*)/soundmetrics_aris3000/(.*)' -o /home/stdops/logs/bags/pladypos_sonar_video /surface/position /surface/measurement /surface/gps /surface/imu" if="$(arg logging)" />
+</launch>

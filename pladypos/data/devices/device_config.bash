@@ -20,7 +20,7 @@ export USBL_PORT=/dev/ttyUSB2
 export USBL_BAUD=115200
 
 # Novatel dGPS configuration
-export NOVATEL_PORT=/dev/ttyS1
+export NOVATEL_PORT=/dev/ttyUSB1
 export NOVATEL_BAUD=115200
 export USE_NOVATEL_GPS=false
 

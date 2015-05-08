@@ -7,6 +7,8 @@ dp_controller/closed_loop_freq: [0.2,0.2]
 alt_controller/closed_loop_freq: 0.3
 #Heading controller
 hdg_controller/closed_loop_freq: 0.5
+#Line-following controller
+ualf_controller/closed_loop_freq: 0.4
 #Velocity controller
 velocity_controller/closed_loop_freq: [0.8,0.8,1.2,1.0,1.0,1.8]
 velocity_controller/auto_tracking: [0.0,0.0,0.0,1.0,1.0,0.0]

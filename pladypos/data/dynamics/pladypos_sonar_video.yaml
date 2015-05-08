@@ -1,5 +1,5 @@
 sampling_time: 0.1
-mass: 0.5
+mass: 3
 gravity: 9.81
 fluid_density: 1025.0
 
@@ -9,10 +9,10 @@ bounding_ellipsoid: [0.1,0.1,0.1]
 # The dynamic parameters
 rg: [0, 0, 0] # The location vector of the COG
 rb: [0, 0, 0] # The location vector of the buoyancy 
-inertia_matrix: [5, 5, 0.45] # Matrix (3x3) or diagonal elements (1x3)
-added_mass: [0.74, 0.74, 0.74, 0, 0, 0] # Matrix (6x6) or diagonal elements (1x6)
+inertia_matrix: [5, 5, 0.44525] # Matrix (3x3) or diagonal elements (1x3)
+added_mass: [1.3386, 1.3386, 0.74, 0, 0, 0] # Matrix (6x6) or diagonal elements (1x6)
 linear_damping: [0, 0, 20, 5, 5, 0] # Matrix (6x6) or diagonal elements (1x6)
-quadratic_damping: [3.27,3.4,0,0,0,0.3] # Matrix (6x6) or diagonal elements (1x6)
+quadratic_damping: [4.8363,4.8363,0,0,0,0.22925] # Matrix (6x6) or diagonal elements (1x6)
 
 # The initial states
 eta0: [0,0,0,0,0,1.0] # Initial pose

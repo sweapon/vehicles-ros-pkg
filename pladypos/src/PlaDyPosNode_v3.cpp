@@ -99,9 +99,9 @@ void PlaDyPosNode_v3::configure(ros::NodeHandle& nh, ros::NodeHandle& ph)
 {
 	//Initialize subscribers and publishers
 	tau = nh.subscribe("tauIn", 1, &PlaDyPosNode_v3::onTau,this);
-	batteryVoltage = nh.subscribe("battery_voltage", 1, &PlaDyPosNode_v3::onBatteryVoltage,this);
+	//batteryVoltage = nh.subscribe("battery_voltage", 1, &PlaDyPosNode_v3::onBatteryVoltage,this);
 	tauAch = nh.advertise<auv_msgs::BodyForceReq>("tauAch",1);
-	revs = nh.advertise<std_msgs::Int16MultiArray>("pwm_out",1);
+	revs = nh.advertise<std_msgs::Float32MultiArray>("pwm_out",1);
 	
 	//Initialize max/min tau
 	double maxThrust(1),minThrust(-1);
@@ -231,17 +231,17 @@ void PlaDyPosNode_v3::onTau(const auv_msgs::BodyForceReq::ConstPtr tau)
 	tauAch.publish(t);
 
 	//Tau to Revs
-	std_msgs::Int16MultiArray::Ptr pwm(new std_msgs::Int16MultiArray());
+	std_msgs::Float32MultiArray::Ptr pwm(new std_msgs::Float32MultiArray());
 	pwm->data.resize(4);
 	//Here we map the thrusts
 	for (int i=0; i<pwm->data.size();++i)
 	{
-		pwm->data[i] = 255*labust::vehicles::AffineThruster::getRevsD(tauI(i)/((Ub*Ub)/(Un*Un)),posDir[i],negDir[i]);
+		pwm->data[i] = labust::vehicles::AffineThruster::getRevsD(tauI(i)/((Ub*Ub)/(Un*Un)),posDir[i],negDir[i]);
 	}
 
 	//The driver has 6 elements
-	pwm->data.push_back(0);
-	pwm->data.push_back(0);
+	///pwm->data.push_back(0);
+	//pwm->data.push_back(0);
 	
 	revs.publish(pwm);
 }

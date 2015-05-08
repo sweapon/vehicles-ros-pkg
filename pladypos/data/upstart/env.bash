@@ -12,10 +12,10 @@ source `rospack find ${VEHICLE}`/data/control/control_config.bash
 source `rospack find ${VEHICLE}`/data/navigation/navigation_config.bash
 
 # Launch configuration
-LAUNCH_PKG=pladypos
-LAUNCH_FILE=pladypos_standard_mws.launch
+export LAUNCH_PKG=pladypos
+export LAUNCH_FILE=pladypos_standard_mws.launch
 
 # Configure logging
-LOG_PATH=/home/${USER}/logs/launcher
-ROS_LOG_PATH=/home/${USER}/logs/ros
-LOGGING=false
+export LOG_PATH=/home/${USER}/logs/launcher
+export ROS_LOG_DIR=/home/${USER}/logs/ros
+export LOGGING=true

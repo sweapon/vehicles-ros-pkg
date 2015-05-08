@@ -1,0 +1,11 @@
+<launch>
+  <arg name="altitude_offset" default="$(optenv ALTITUDE_OFFSET 0.55)" />
+  <node pkg="aris" type="soundmetrics_aris3000.py" name="aris_sonar" >
+ </node>
+ <group ns="sonar">
+  <node pkg="sonar_image_processing" type="sonar_bathymetry_node" name="sonar_bathymetry" >
+   <param name="altitude_offset" value="$(arg altitude_offset)" />
+   <remap from="altitude" to="/surface/altitude" />
+ </node>
+ </group>
+</launch>
