@@ -1,6 +1,6 @@
 <launch>
   <!-- Serial bridge to arduino -->
-  <arg name="driver_port" default="$(env ARDUINO_PORT)" />
+  <arg name="driver_port" default="$(optenv ARDUINO_PORT /dev/arduino)" />
   <arg name="driver_baud" default="$(optenv ARDUINO_BAUD 115200)" />
 
   <node pkg="rosserial_python" type="serial_node.py" name="arduino" args="$(arg driver_port)" />

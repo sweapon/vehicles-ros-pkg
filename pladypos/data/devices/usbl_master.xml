@@ -1,8 +1,0 @@
-<launch>
-	<group ns="usbl">
-	<node pkg="seatrac" type="seatrac_core" name="usbl">
-	   <param name="comms_plugin" value="labust::seatrac::SeatracSerial" />
-	   <param name="controller_plugin" value="labust::seatrac::USBLController" />
-	</node>
-	</group>
-</launch>

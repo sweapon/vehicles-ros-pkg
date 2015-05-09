@@ -1,11 +1,11 @@
 #!/bin/bash
 # Ublox configuration
-export UBLOX_PORT=/dev/ttyACM0
+export UBLOX_PORT=/dev/ublox
 export UBLOX_BAUD=115200
 export UBLOX_USE_GPS=true
 
 # Spatial configuration 
-export SPATIAL_PORT=/dev/ttyUSB0
+export SPATIAL_PORT=/dev/spatial
 export SPATIAL_BAUD=115200
 export SPATIAL_USE_GPS=false
 
@@ -16,16 +16,16 @@ export NAVQUEST_FIXED_YAW=3.14159
 export NAVQUEST_USE_FIXED_YAW=true
 
 # Seatrac USBL configuration
-export USBL_PORT=/dev/ttyUSB2
+export USBL_PORT=/dev/usbl
 export USBL_BAUD=115200
 
 # Novatel dGPS configuration
-export NOVATEL_PORT=/dev/ttyUSB1
+export NOVATEL_PORT=/dev/novatel
 export NOVATEL_BAUD=115200
 export USE_NOVATEL_GPS=false
 
 # Arduino driver configuration
-export ARDUINO_PORT=/dev/ttyACM1
+export ARDUINO_PORT=/dev/arduino
 export ARDUINO_BAUD=115200
 
 # VideoRay driver configuration

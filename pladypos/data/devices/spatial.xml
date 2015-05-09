@@ -1,6 +1,6 @@
 <launch>
   <!-- GPS+IMU setup -->
-  <arg name="spatial_port" default="$(optenv SPATIAL_PORT /dev/ttyUSB0)" />
+  <arg name="spatial_port" default="$(optenv SPATIAL_PORT /dev/arduino)" />
   <arg name="spatial_baud" default="$(optenv SPATIAL_BAUD 115200)" />
   <arg name="use_spatial_gps" default="$(optenv SPATIAL_USE_GPS false)" />
   

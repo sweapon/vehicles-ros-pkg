@@ -1,6 +1,6 @@
 <launch>
   <!-- GPS setup -->
-  <arg name="ublox_port" default="$(optenv UBLOX_PORT /dev/ttyACM0)" />
+  <arg name="ublox_port" default="$(optenv UBLOX_PORT /dev/ublox)" />
   <arg name="ublox_baud" default="$(optenv UBLOX_BAUD 115200)" />
   <arg name="use_ublox_gps" default="$(optenv UBLOX_USE_GPS true)" />
 
