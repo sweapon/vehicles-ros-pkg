@@ -39,10 +39,11 @@
   <include file="$(find pladypos)/data/control/control_standard.xml"/>
   
   <!-- Load the primitives -->
-  <include file="$(find pladypos)/data/primitives/primitives_standard.xml"/>
- 
-<!--  <include file="$(find biograd0515_usbl_navigation)/launch/common/mission.launch"/>
--->  
+  <include file="$(find pladypos)/data/control/primitives_standard.xml"/>
+  
+  <!-- Load the mission execution -->
+  <include file="$(find pladypos)/data/control/mission_standard.xml"/>
+  
   <!-- Load driver -->
   <include file="$(find pladypos)/data/devices/arduino_driver.xml"/>
   
