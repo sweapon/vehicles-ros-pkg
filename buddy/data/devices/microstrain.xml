@@ -1,0 +1,12 @@
+<launch>
+  <arg name="gx3_port" default="$(optenv MICROSTRAIN_PORT /dev/ttyACM1)" />
+  <arg name="gx3_baud" default="$(optenv MICROSTRAIN_BAUD 115200)" />
+  
+  <node pkg="microstrain_3dmgx2_imu" type="imu_node" name="microstrain">
+    <param name="port" value="$(arg gx3_port)" />
+    <param name="baud" value="$(arg gx3_baud)" />
+    <param name="autocalibrate" value="false" />
+    <!-- Topic remapping -->
+    <remap from="imu/data" to="imu" />
+  </node>
+</launch>

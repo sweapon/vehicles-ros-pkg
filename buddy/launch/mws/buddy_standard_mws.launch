@@ -1,0 +1,60 @@
+<launch>
+  <!-- The configuration assumes direct connection to ublox GPS and Spatial -->
+  <!-- GPS: UBLOX, IMU: microstrain, DVL: linkquest -->
+  <!-- Namespace: none -->
+
+  <!-- Arguments -->
+  <arg name="logging" default="$(optenv LOGGING false)" />
+  
+  <group ns="buddy">  
+  <!-- Load parameters -->
+  <rosparam file="$(find buddy)/data/navigation/params/nav_standard.yaml"/>
+  <rosparam file="$(find buddy)/data/control/params/controllers_standard.yaml"/>
+  <rosparam file="$(find buddy)/data/dynamics/buddy.yaml" />
+   
+  <!-- Load sensors --> 
+  <include file="$(find buddy)/data/devices/ublox.xml" />
+  <include file="$(find buddy)/data/devices/microstrain.xml" />
+  <include file="$(find buddy)/data/devices/navquest.xml" />
+  
+  <!-- Static TF -->
+  <include file="$(find buddy)/data/devices/static_frames.xml"/>
+
+  <!-- Load the navigation -->
+  <include file="$(find buddy)/data/navigation/navigation_standard.xml"/>
+  
+  <!-- Load the controllers -->
+  <include file="$(find buddy)/data/control/control_standard.xml"/>
+  
+  <!-- Load the primitives -->
+  <!-- <include file="$(find buddy)/data/primitives/primitives_standard.xml"/> -->
+ 
+<!--  <include file="$(find biograd0515_usbl_navigation)/launch/common/mission.launch"/>
+-->  
+  <!-- Load driver -->
+  <group ns="buddy_diagnostic">
+     <include file="$(find buddy)/data/devices/arduino_diagnostics.xml"/>
+  </group>
+
+  <!-- Load driver -->
+  <include file="$(find buddy)/data/devices/brushless_driver.xml"/>
+  
+  <!-- Load relay module -->
+  <!-- <include file="$(find buddy)/data/devices/relay_module.xml"/> -->
+
+  <!-- The background clock server -->
+  <node pkg="snippets" type="clock_server.py" name="buddy_clock">
+	<remap from="clock" to="buddy_clock" />
+  </node>
+
+  </group>
+
+  <!-- Start logger -->
+  <node pkg="rosbag" type="record" name="logger" args="-a -x '(.*)/camera(.*)|(.*)/sonar/(.*)|(.*)/soundmetrics_aris3000/(.*)' -o /mnt/extern/logs/bags/buddy" if="$(arg logging)" />
+
+  <!-- Load multi-master with full sync -->
+  <!-- <node pkg="master_discovery_fkie" type="zeroconf" name="zeroconf" /> -->
+  <!-- <node pkg="master_sync_fkie" type="master_sync" name="master_sync" > -->
+    <!-- <param name="interface_url" value="$(find pladypos)/data/multi_master/pladypos_basic.sync" /> -->
+  <!-- </node> -->
+</launch>

@@ -1,0 +1,15 @@
+<launch>
+  <!-- NavQuest setup -->
+  <arg name="navquest_port" default="$(optenv NAVQUEST_PORT /dev/ttyS0)" />
+  <arg name="navquest_baud" default="$(optenv NAVQUEST_BAUD 115200)" />
+  <arg name="fixed_orientation" default="$(optenv NAVQUEST_FIXED_YAW 0.0)" />
+  <arg name="use_fixed_orientation" default="$(optenv NAVQUEST_USE_FIXED_YAW true)" />
+
+  <node pkg="navquest_dvl" type="navquest_node" name="dvl" >
+	<param name="PortName" value="$(arg navquest_port)" />
+	<param name="Baud" value="$(arg navquest_baud)" />
+	<param name="fixed_orientation" value="$(arg fixed_orientation)" 
+		if="$(arg use_fixed_orientation)" />
+	<remap from="velo_instrument" to="dvl" />	
+  </node>
+</launch>

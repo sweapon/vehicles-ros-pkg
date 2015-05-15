@@ -1,0 +1,14 @@
+<launch>
+  <!-- GPS setup -->
+  <arg name="ublox_port" default="$(optenv UBLOX_PORT /dev/ttyUSB1)" />
+  <arg name="ublox_baud" default="$(optenv UBLOX_BAUD 115200)" />
+
+  <node pkg="nmea_navsat_driver" type="nmea_serial_driver" name="ublox">
+	<param name="port" value="$(arg ublox_port)" />
+	<param name="baud" value="$(arg ublox_baud)" />
+        <param name="frame_id" value="gps_frame" />
+	<!-- Remappings -->
+ 	<remap from="fix" to="gps" />
+ 	<remap from="vel" to="fix_velocity" />
+  </node>
+</launch>

@@ -1,6 +1,6 @@
 <launch>
     <node pkg="videoray" type="bmotor_node2" name="brushless_motor">
-  	<!-- <remap from="pwm_in" to="pwm_out" /> -->
+  	<remap from="pwm_in" to="pwm_out" />
 	<param name="PortName" value="/dev/ttyS2" />
 	<param name="Baud" value="115200" />
     	<rosparam command="load"
@@ -9,10 +9,11 @@
         <param name="min" value="-0.2"/>
 
     </node>
-    <!-- <node pkg="pladypos" name="buddy_node" type="buddy_node_v1">
+    <node pkg="pladypos" name="buddy_node" type="buddy_node_v1">
       <param name="maxThrust" value="1"/>
       <param name="minThrust" value="-1"/>
-      <param name="max_cap" value="0.85"/>
+      <param name="max_cap" value="0.67"/>
       <remap from="tauIn" to="tauOut" />
-    </node> -->
+    </node>
+    <node pkg="labust_control" type="velocity_control" name="velcon" />
 </launch>
