@@ -2,7 +2,7 @@
 # Default supply voltage
 Us: 46.8
 # Nominal motor voltage
-Un: 9.5
+Un: 9
 # Thruster coefficients
 Kp: [0.0083627, 0.0078504, 0.0076044, 0.0086229]
 Kn: [0.0008707, 0.0009284, 0.0031820, 0.0035230]

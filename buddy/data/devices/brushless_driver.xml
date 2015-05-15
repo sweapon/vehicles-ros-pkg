@@ -9,8 +9,8 @@
     <rosparam command="load"
         	file="$(find buddy)/data/allocation/thrusters.yaml" />
     <!-- PWM safety parameters -->
-    <param name="max" value="0.25"/>
-    <param name="min" value="-0.25"/>
+    <param name="max" value="0.2"/>
+    <param name="min" value="-0.2"/>
     <!-- Remapping -->
     <remap from="pwm_in" to="pwm_out" />
   </node>

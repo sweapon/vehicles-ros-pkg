@@ -15,11 +15,11 @@ export USBL_PORT=/dev/ttyUSB0
 export USBL_BAUD=115200
 
 # Microstrain IMU
-export MICROSTRAIN_PORT=/dev/ttyACM1
+export MICROSTRAIN_PORT=/dev/ttyACM0
 export MICROSTRAIN_BAUD=115200
 
 # Arduino diagnostics
-export ARDUINO_PORT=/dev/ttyACM0
+export ARDUINO_PORT=/dev/ttyACM1
 export ARDUINO_BAUD=115200
 
 # Relay Module configuration
