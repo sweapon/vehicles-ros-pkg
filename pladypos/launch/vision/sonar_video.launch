@@ -9,5 +9,5 @@
 	<arg name="altitude_offset" value="0.55" />
   </include>
 
-  <node pkg="rosbag" type="record" name="vision_logger" args="-e '(.*)/camera(.*)|(.*)/sonar/(.*)|(.*)/soundmetrics_aris3000/(.*)' -o /home/stdops/logs/bags/pladypos_sonar_video /surface/position /surface/measurement /surface/gps /surface/imu" if="$(arg logging)" />
+  <node pkg="rosbag" type="record" name="vision_logger" args="--split --size=1024 -e '(.*)/camera(.*)|(.*)/sonar/(.*)|(.*)/soundmetrics_aris3000/(.*)' -o /home/stdops/logs/bags/pladypos_sonar_video /surface/position /surface/measurement /surface/gps /surface/imu /surface/altitude" if="$(arg logging)" />
 </launch>

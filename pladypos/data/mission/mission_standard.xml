@@ -1,0 +1,38 @@
+<!--/*****************************************************************
+ * labust_mission_template.launch
+ *
+ *  Created on: Apr 15, 2014
+ *      Author: Filip Mandic
+ *
+ *****************************************************************/-->
+
+<launch>
+
+    <!-- ========================================================= -->
+    <!-- == Arguments ============================================ -->
+    <!-- ========================================================= -->
+    <arg name="topside" default="false" />
+
+    <!-- ========================================================= -->
+    <!-- == Mission execution node =============================== -->
+    <!-- ========================================================= -->
+
+    <node
+	unless="$(arg topside)" 
+        name="mission_execution_node" 
+        pkg="labust_mission" 
+        type="mission_exec">
+        
+        <remap from="stateHat" to="position" />
+    </node>
+
+    <node
+	unless="$(arg topside)"  
+        name="data_event_node" 
+        pkg="labust_mission" 
+        type="data_event_manager">
+        
+        <remap from="stateHat" to="position"/>       
+    </node>
+
+</launch>

@@ -172,8 +172,8 @@ namespace labust
 			//lightLimit.min = reader->value<double>("lightLimit/@min");
 			//lightLimit.max = reader->value<double>("lightLimit/@max");
 
-			revLimit.min = -220;
-			revLimit.max = 220;
+			revLimit.min = -500;
+			revLimit.max = 500;
 			lightLimit.min = 0;
 			lightLimit.max = 100;
 

@@ -15,11 +15,11 @@ linear_damping: [0, 0, 3.5, 5, 5, 0] # Matrix (6x6) or diagonal elements (1x6)
 quadratic_damping: [2.611,3.4,0,0,0,0.575] # Matrix (6x6) or diagonal elements (1x6)
 
 # The initial states
-eta0: [5,5,0,0,0,0] # Initial pose
+eta0: [10,0,1,0,0,0] # Initial pose
 nu0:  [0,0,0,0,0,0] # Initial speeds
 current: [0,0,0] # Initial currents (N,E,D)
 
 # The process and measurement noise specification
 process_noise: [0.05,0.05,0.05,0.02,0.02,0.02] # Vector (6)
-measurement_noise: [1,1,0.02,0.01,0.01,0.01] # Vector (6)
+measurement_noise: [0.05,0.05,0.02,0.01,0.01,0.01] # Vector (6)
 coupled: false # Use a coupled model

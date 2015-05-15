@@ -1,6 +1,6 @@
 <launch>
   <!-- The configuration assumes direct connection to ublox GPS and Spatial -->
-  <!-- GPS: UBLOX, SPATIAL, NOVATEL on a Multiplexer Switch, IMU: spatial, DVL: none -->
+  <!-- GPS: NOVATEL, UBLOX, SPATIAL on a Multiplexer Switch, IMU: spatial, DVL: none -->
   <!-- Namespace: none -->
 
   <!-- Arguments -->
@@ -26,7 +26,7 @@
   </include>
   <!-- GPS muxer -->
   <node pkg="topic_tools" type="mux" name="gps_mux" 
-	args="gps fix_ublox fix_spatial fix_novatel" >
+	args="gps fix_novatel fix_ublox fix_spatial" >
     	<remap from="mux" to="gps_select" />
   </node>
   <!-- Static TF -->
@@ -40,9 +40,10 @@
   
   <!-- Load the primitives -->
   <include file="$(find pladypos)/data/primitives/primitives_standard.xml"/>
- 
-<!--  <include file="$(find biograd0515_usbl_navigation)/launch/common/mission.launch"/>
--->  
+  
+  <!-- Load the mission execution -->
+  <include file="$(find pladypos)/data/mission/mission_standard.xml"/>
+  
   <!-- Load driver -->
   <include file="$(find pladypos)/data/devices/arduino_driver.xml"/>
   
