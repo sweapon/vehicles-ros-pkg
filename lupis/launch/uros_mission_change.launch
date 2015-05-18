@@ -1,0 +1,23 @@
+<launch>
+  <node pkg="ros_imc" type="udp_relay" name="lauv_udp">
+    <param name="local_ip" value="10.0.10.32" />
+    <param name="remote_ip" value="10.0.10.130" />
+    <param name="local_port" value="31400" />
+    <param name="remote_port" value="31400" />
+  </node>
+
+  <node pkg="ros_imc" type="send_mission" name="lauv_imc">
+    <param name="entity" value="47" />
+    <param name="id" value="261" />
+    <param name="remote_entity" value="44" />
+    <param name="remote_id" value="258" />
+    
+    <param name="timeout" value="60" />
+    <param name="speed" value="1" />
+    <param name="useRows" value="false" />
+    <param name="rowsWidth" value="20" />
+    <param name="rowsLength" value="20" />
+    <param name="rowsHstep" value="10" />
+    <param name="loiterRadius" value="10" />
+  </node>
+</launch>
