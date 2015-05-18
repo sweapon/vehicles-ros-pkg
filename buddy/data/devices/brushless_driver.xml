@@ -1,0 +1,40 @@
+<launch>
+  <!-- Serial bridge to arduino -->
+  <arg name="driver_port" default="$(optenv BRUSHLESS_PORT /dev/ttyS2)" />
+  <arg name="driver_baud" default="$(optenv BRUSHLESS_BAUD 115200)" />
+
+  <node pkg="videoray" type="bmotor_node2" name="brushless_motor">
+    <param name="PortName" value="$(arg driver_port)" />
+    <param name="Baud" value="$(arg driver_baud)" />
+    <rosparam command="load"
+        	file="$(find buddy)/data/allocation/thrusters.yaml" />
+    <!-- PWM safety parameters -->
+    <param name="max" value="0.2"/>
+    <param name="min" value="-0.2"/>
+    <!-- Remapping -->
+    <remap from="pwm_in" to="pwm_out" />
+  </node>
+
+ <node pkg="labust_allocation" name="alloc" type="allocation_node">
+    <rosparam command="load" 
+  	     file="$(find buddy)/data/allocation/xvconfig.yaml" />   
+    <param name="allocation_plugin" value="labust::allocation::X2dAdaptive" />
+    <param name="minN" value="1" />
+    <param name="daisy_chain" value="true" />
+    <param name="multi_chain" value="true" />
+    <param name="adapt_pwm" value="true" />
+    <param name="adapt_supply" value="true" />
+    <remap from="supply_voltage" to="battery_voltage" /> 
+    <remap from="tau_in" to="tauOut" />
+    <remap from="tau_ach" to="tauAch" />
+  </node>
+
+  <node pkg="pladypos" name="pladypos_node" type="buddy_node_v1">
+      <param name="maxThrust" value="1"/>
+      <param name="minThrust" value="-1"/>
+      <param name="max_cap" value="0.6"/>
+      <remap from="tauIn" to="tauOut" />
+      <remap from="pwm_out" to="pwm_out_classic" />
+      <remap from="tauAch" to="tauAch_classic" />
+ </node>
+</launch>

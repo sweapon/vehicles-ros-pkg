@@ -1,0 +1,57 @@
+<launch>
+	<arg name="use_ident" default="$(optenv USE_IDENTIFICATION false)" />
+	<arg name="use_trackpoint" default="$(optenv USE_TRACKPOINT false)" />
+		
+    <node if="$(arg use_ident)" pkg="ident_so" type="ident_so" 
+        name="identification">
+	<param name="useUV" value="true" />
+	<param name="integrateUV" value="true" />
+        <remap from="tauOut" to="tauIdent" />
+        <remap from="meas" to="measurement" />
+    </node>
+	<!-- Low-level controller -->
+	<node pkg="labust_control" type="velocity_control" name="velcon">
+		<remap from="nuRef" to="nuRefMerged" />
+		<remap from="stateHat" to="position" />
+		<remap from="meas" to="measurement" />
+	</node>
+
+	<!-- ========================================================= -->
+	<!-- == High Level controllers =============================== -->
+	<!-- ========================================================= -->
+	<group>
+		<remap from="out" to="nuRef" />
+		<remap from="ref" to="stateRef" />
+		<remap from="state" to="position" />
+		<remap from="windup" to="tauAch" />
+
+		<!-- FADP controller node ================================ -->
+		<node pkg="labust_control" type="fadp_controller2" name="station_keeping">
+			<remap from="Enable" to="FADP_enable" />
+			<remap if="$(arg use_trackpoint)" from="ref" to="TrackPoint" />
+		</node>
+		
+		<!-- HDG controller node ================================ -->
+		<node pkg="labust_control" type="hdg_controller2" name="hdg_control">
+			<remap from="Enable" to="HDG_enable" />
+		</node>
+		
+		<!-- FALF controller node ================================ -->
+		<node pkg="labust_control" type="ualf_controller" name="ualf_controller">
+		    <remap from="Enable" to="UALF_enable" />
+	        <param name="underactuated" value="false" />
+		</node>
+
+        <!-- UALF controller node ================================ -->
+		<node pkg="labust_control" type="ualf_controller" name="ualf_controller_1">
+		    <remap from="Enable" to="UALF_enable_1" />
+		    <param name="underactuated" value="true" />
+		</node>
+
+		<node pkg="labust_control" type="async_merger" name="nu_merger">
+			<remap from="in" to="nuRef" />
+			<remap from="out" to="nuRefMerged" />
+			<param name="merge_nu" value="true" />
+		</node>
+	</group>
+</launch>

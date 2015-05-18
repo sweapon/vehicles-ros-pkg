@@ -99,6 +99,8 @@ namespace labust
 			ros::Publisher diagnostic;
 			///Power input
 			ros::Subscriber thrustIn;
+			///Battery voltage publisher
+			ros::Publisher supply;
 
 			///Thrust input handler.
 			void onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust);

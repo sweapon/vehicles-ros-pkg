@@ -337,6 +337,8 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 
 	std::ostringstream t;
 	boost::archive::binary_oarchive thrustSer(t, boost::archive::no_header);
+	float zero(0);
+	thrustSer<<zero;
 	//Serialize the outgoing thrust for available thrusters
 	for (int i=0; i<thrusterId.size(); ++i)
 	{

@@ -42,6 +42,7 @@
 #include <labust/tools/conversions.hpp>
 #include <labust/math/NumberManipulation.hpp>
 #include <diagnostic_msgs/DiagnosticStatus.h>
+#include <std_msgs/Float32.h>
 
 #include <boost/bind.hpp>
 #include <boost/crc.hpp>
@@ -99,6 +100,8 @@ void BMotor::onInit()
 		}
 	}
 
+
+	//for (int i=0; i<thrusterId.size(); ++i) ROS_ERROR("N:%d",thrusterId[i]);
 	name = "thrusterDir";
 	if (ph.hasParam(name))
 	{
@@ -121,6 +124,7 @@ void BMotor::onInit()
 
 	//Setup publisher
 	diagnostic = nh.advertise<diagnostic_msgs::DiagnosticArray>("diagnostics",1);
+	supply = nh.advertise<std_msgs::Float32>("battery_voltage",1);
 	//Setup subscribers
 	thrustIn = nh.subscribe<std_msgs::Float32MultiArray>("pwm_in",1,&BMotor::onThrustIn,this);
 
@@ -275,6 +279,10 @@ void BMotor::onData(const boost::system::error_code& e,
 			ROS_INFO("\tRPM=%f", data.rpm);
 			ROS_INFO("\tTemperature=%f", data.temp);
 			ROS_INFO("\tFault=%d", data.fault);
+			
+			std_msgs::Float32 vout;
+			vout.data = data.bus_v;
+			supply.publish(vout);
 
 			std::string keys[]={"voltage", "current", "rpm", "temp", "fault"};
 			float values[]={data.bus_v, data.bus_i, data.rpm, data.temp, float(data.fault)};
@@ -283,7 +291,7 @@ void BMotor::onData(const boost::system::error_code& e,
 			//Number of thrusters - remaining in queue
 			// - single that was already sent
 			int lid = lastId;//thrusterId.size() - output.size() - 1;
-			if ((lid >= 0) && (lid < thrusterId.size()))
+			if ((lid >= 0) && (lid <= thrusterId.size()))
 			{
 				out<<"BMotor"<<int(thrusterId[lid]);
 				diag.hardware_id=out.str();
@@ -358,12 +366,16 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 
 	std::ostringstream t;
 	boost::archive::binary_oarchive thrustSer(t, boost::archive::no_header);
+        float zero(0);
+	thrustSer<<zero;
 	//Serialize the outgoing thrust for available thrusters
+	ROS_ERROR("Sending:");
 	for (int i=0; i<thrusterId.size(); ++i)
 	{
 		float t = ((i<nthrust)?thrust->data[i]:0);
 		t = labust::math::coerce(thrusterDir[i]*t, min, max);
 		thrustSer<<t;
+		ROS_ERROR("%f",t);
 	}
 
 	//Process next thruster
@@ -390,8 +402,10 @@ void BMotor::onThrustIn(const std_msgs::Float32MultiArray::ConstPtr& thrust)
 	//Add the payload command
 	uint8_t hdr(0xAA);
 	payload<<hdr;
+	uint8_t nn = thrusterId[nextId];
+	//ROS_ERROR("Next in line: %d",nn);
 	//Add the node id
-	payload<<nextId;
+	payload<<nn;
 	//Add all thruster values
 	clean_string_serialize(payload, t.str());
 	//Add payload
