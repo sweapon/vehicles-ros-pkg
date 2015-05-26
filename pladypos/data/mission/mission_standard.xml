@@ -1,5 +1,5 @@
 <!--/*****************************************************************
- * labust_mission_template.launch
+ * mission_standard.xml
  *
  *  Created on: Apr 15, 2014
  *      Author: Filip Mandic
@@ -11,28 +11,27 @@
     <!-- ========================================================= -->
     <!-- == Arguments ============================================ -->
     <!-- ========================================================= -->
-    <arg name="topside" default="false" />
 
     <!-- ========================================================= -->
     <!-- == Mission execution node =============================== -->
     <!-- ========================================================= -->
 
     <node
-	unless="$(arg topside)" 
         name="mission_execution_node" 
         pkg="labust_mission" 
         type="mission_exec">
         
         <remap from="stateHat" to="position" />
+        <remap from="stateHatAbs" to="position" />   
     </node>
 
     <node
-	unless="$(arg topside)"  
         name="data_event_node" 
         pkg="labust_mission" 
         type="data_event_manager">
         
-        <remap from="stateHat" to="position"/>       
+        <remap from="stateHat" to="position"/>   
+        <remap from="stateHatAbs" to="position" />              
     </node>
 
 </launch>
